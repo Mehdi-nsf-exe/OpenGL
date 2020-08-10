@@ -4,6 +4,8 @@
 #include <glad\glad.h>
 #include <GLFW\glfw3.h>
 
+#include "Shader.h"
+
 #define MAJOR_OPENGL_VERSION 3
 #define MINOR_OPENGL_VERSION 3
 
@@ -11,7 +13,8 @@
 #define WINDOW_HEIGHT	600
 #define WINDOW_TITLE	"learnOpenGL"
 
-#define INFOLOG_LENGTH 512
+#define VERTEX_SHADER_PATH "res\\shaders\\shader.vert"
+#define FRAGMENT_SHADER_PATH "res\\shaders\\shader.frag"
 
 /**
  * The callback for the glfw window resizing event.
@@ -27,32 +30,17 @@ void processInput(GLFWwindow* window);
 int main(void) {
 
 	float vertices[] = {
-		 0.5f,  0.5f, 0.0f,
-		 0.5f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		-0.5f,  0.5f, 0.0f,
+		// Positions			// Colors
+		 0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f,
+		-0.5f,  0.5f, 0.0f,	0.5f, 0.0f, 0.5f,
 	};
 
 	unsigned int indices[] = {
 		0, 1, 3,
 		1, 2, 3
 	};
-
-	const char* vertexShaderSrc = "#version 330 core\n"
-		"layout (location = 0) in vec3 aPos;\n"
-
-		"void main() {\n"
-		"	gl_Position = vec4(aPos.xyz, 1.0);\n"
-		"}\n";
-
-	const char* fragmentShaderSrc = "#version 330 core\n"
-		"out vec4 fragColor;\n"
-
-		"uniform vec4 ourColor;\n"
-
-		"void main() {\n"
-		"	fragColor = ourColor;\n"
-		"}\n";
 
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MAJOR_OPENGL_VERSION);
@@ -87,78 +75,61 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	GLuint eboId;
 	glGenBuffers(1, &eboId);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	
+	int mainReturnValue = EXIT_SUCCESS;
 
-	int success;
-	char infoLog[INFOLOG_LENGTH];
+	try {
+		Shader shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
 
-	GLuint vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShaderId, 1, &vertexShaderSrc, NULL);
-	glCompileShader(vertexShaderId);
+		shader.use();
+		shader.setUniform("xScale", 1.5f);
+		shader.setUniform("useUColor", true);
+		shader.setUniform("colorR", 0.8f);
+		shader.setUniform("colorG", 0.2f);
+		shader.setUniform("colorB", 1.0f);
 
-	glGetShaderiv(vertexShaderId, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(vertexShaderId, INFOLOG_LENGTH, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-		return EXIT_FAILURE;
+		while (!glfwWindowShouldClose(window)) {
+
+			processInput(window);
+
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			glBindVertexArray(vaoId);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
+
+			glfwSwapBuffers(window);
+			glfwPollEvents();
+		}
 	}
-
-	GLuint fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShaderId, 1, &fragmentShaderSrc, NULL);
-	glCompileShader(fragmentShaderId);
-
-	glGetShaderiv(fragmentShaderId, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(fragmentShaderId, INFOLOG_LENGTH, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-		return EXIT_FAILURE;
+	catch (const VertexShaderCompileError& e) {
+		std::cout << "VERTEX SHADER COMPILE ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
+		mainReturnValue = EXIT_FAILURE;
 	}
-
-	GLuint shaderProgramId = glCreateProgram();
-	glAttachShader(shaderProgramId, vertexShaderId);
-	glAttachShader(shaderProgramId, fragmentShaderId);
-	glLinkProgram(shaderProgramId);
-
-	glGetProgramiv(shaderProgramId, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgramId, INFOLOG_LENGTH, NULL, infoLog);
-		std::cout << "ERROR::SHADER_PROGRAM::LINK_FAILED\n" << infoLog << std::endl;
-		return EXIT_FAILURE;
+	catch (const FragmentShaderCompileError& e) {
+		std::cout << "FRAGMENT SHADER COMPILE ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
+		mainReturnValue = EXIT_FAILURE;
 	}
-
-	glDeleteShader(vertexShaderId);
-	glDeleteShader(fragmentShaderId);
-
-	int vertexColorLocation = glGetUniformLocation(shaderProgramId, "ourColor");
-
-	while (!glfwWindowShouldClose(window)) {
-
-		float timeValue = glfwGetTime();
-		float rValue = (sin(timeValue / 0.8f) + 1.0f) / 2.0f;
-		float gValue = (sin(timeValue / 2.3f) + 1.0f) / 2.0f;
-		float bValue = (sin(timeValue / 3.6f) + 1.0f) / 2.0f;
-
-		processInput(window);
-
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		glUseProgram(shaderProgramId);
-		glUniform4f(vertexColorLocation, rValue, gValue, bValue, 1.0f);
-		glBindVertexArray(vaoId);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+	catch (const ShaderProgramLinkError& e) {
+		std::cout << "SHADER PROGRAM LINK ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
+		mainReturnValue = EXIT_FAILURE;
+	}
+	catch (const std::ios_base::failure & e) {
+		std::cout << "FILES COULDN'T BE READ FROM:\n" << e.what() << std::endl;
+		mainReturnValue = EXIT_FAILURE;
 	}
 	glfwTerminate();
-	return EXIT_SUCCESS;
+	return mainReturnValue;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
