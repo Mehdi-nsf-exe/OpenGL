@@ -3,15 +3,26 @@
 
 #include <glad\glad.h>
 #include <GLFW\glfw3.h>
+#define	STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+#include "Shader.h"
 
 #define MAJOR_OPENGL_VERSION 3
 #define MINOR_OPENGL_VERSION 3
 
-#define WINDOW_WIDTH	800
+#define WINDOW_WIDTH		800
 #define WINDOW_HEIGHT	600
-#define WINDOW_TITLE	"learnOpenGL"
+#define WINDOW_TITLE		"learnOpenGL"
 
-#define INFOLOG_LENGTH 512
+#define VERTEX_SHADER_PATH		"res\\shaders\\shader.vert"
+#define FRAGMENT_SHADER_PATH	"res\\shaders\\shader.frag"
+#define CONTAINER_IMAGE_PATH	"res\\textures\\container.jpg"
+#define FACE_IMAGE_PATH			"res\\textures\\awesomeface.png"
+
+#define TEXTURES_COUNT				2
+#define CONTAINER_TEXTURE_INDEX	0
+#define FACE_TEXTURE_INDEX			1
 
 /**
  * The callback for the glfw window resizing event.
@@ -27,32 +38,17 @@ void processInput(GLFWwindow* window);
 int main(void) {
 
 	float vertices[] = {
-		 0.5f,  0.5f, 0.0f,
-		 0.5f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		-0.5f,  0.5f, 0.0f,
+		// Positions			// Colors				// texture coords
+		 0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f,		1.0f, 1.0f,
+		 0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f,		1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f,		0.0f, 0.0f,
+		-0.5f,  0.5f, 0.0f,	1.0f, 1.0f, 0.0f,		0.0f, 1.0f
 	};
 
 	unsigned int indices[] = {
 		0, 1, 3,
 		1, 2, 3
 	};
-
-	const char* vertexShaderSrc = "#version 330 core\n"
-		"layout (location = 0) in vec3 aPos;\n"
-
-		"void main() {\n"
-		"	gl_Position = vec4(aPos.xyz, 1.0);\n"
-		"}\n";
-
-	const char* fragmentShaderSrc = "#version 330 core\n"
-		"out vec4 fragColor;\n"
-
-		"uniform vec4 ourColor;\n"
-
-		"void main() {\n"
-		"	fragColor = ourColor;\n"
-		"}\n";
 
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MAJOR_OPENGL_VERSION);
@@ -69,6 +65,7 @@ int main(void) {
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
+		glfwTerminate();
 		return EXIT_FAILURE;
 	}
 
@@ -87,78 +84,105 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	GLuint eboId;
 	glGenBuffers(1, &eboId);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	int success;
-	char infoLog[INFOLOG_LENGTH];
+	int imageWidth, imageHeight, nrChannels;
+	unsigned char* imageData;
+	stbi_set_flip_vertically_on_load(true);
 
-	GLuint vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShaderId, 1, &vertexShaderSrc, NULL);
-	glCompileShader(vertexShaderId);
+	unsigned int textureIds[TEXTURES_COUNT];
+	glGenTextures(TEXTURES_COUNT, textureIds);
 
-	glGetShaderiv(vertexShaderId, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(vertexShaderId, INFOLOG_LENGTH, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-		return EXIT_FAILURE;
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureIds[CONTAINER_TEXTURE_INDEX]);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	imageData = stbi_load(CONTAINER_IMAGE_PATH, &imageWidth, &imageHeight, &nrChannels, 0);
+	if (imageData) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, imageData);
+		glGenerateMipmap(GL_TEXTURE_2D);
 	}
-
-	GLuint fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShaderId, 1, &fragmentShaderSrc, NULL);
-	glCompileShader(fragmentShaderId);
-
-	glGetShaderiv(fragmentShaderId, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(fragmentShaderId, INFOLOG_LENGTH, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-		return EXIT_FAILURE;
+	else {
+		std::cout << "Failed to load texture" << std::endl;
 	}
+	stbi_image_free(imageData);
+	imageData = nullptr;
+	
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textureIds[FACE_TEXTURE_INDEX]);
 
-	GLuint shaderProgramId = glCreateProgram();
-	glAttachShader(shaderProgramId, vertexShaderId);
-	glAttachShader(shaderProgramId, fragmentShaderId);
-	glLinkProgram(shaderProgramId);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glGetProgramiv(shaderProgramId, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgramId, INFOLOG_LENGTH, NULL, infoLog);
-		std::cout << "ERROR::SHADER_PROGRAM::LINK_FAILED\n" << infoLog << std::endl;
-		return EXIT_FAILURE;
+	imageData = stbi_load(FACE_IMAGE_PATH, &imageWidth, &imageHeight, &nrChannels, 0);
+	if (imageData) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+		glGenerateMipmap(GL_TEXTURE_2D);
 	}
+	else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(imageData);
+	
+	int mainReturnValue = EXIT_SUCCESS;
 
-	glDeleteShader(vertexShaderId);
-	glDeleteShader(fragmentShaderId);
+	try {
+		Shader shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
 
-	int vertexColorLocation = glGetUniformLocation(shaderProgramId, "ourColor");
+		shader.use();
+		shader.setUniform("texture0", 0);
+		shader.setUniform("texture1", 1);
 
-	while (!glfwWindowShouldClose(window)) {
+		while (!glfwWindowShouldClose(window)) {
 
-		float timeValue = glfwGetTime();
-		float rValue = (sin(timeValue / 0.8f) + 1.0f) / 2.0f;
-		float gValue = (sin(timeValue / 2.3f) + 1.0f) / 2.0f;
-		float bValue = (sin(timeValue / 3.6f) + 1.0f) / 2.0f;
+			processInput(window);
 
-		processInput(window);
+			glClear(GL_COLOR_BUFFER_BIT);
 
-		glClear(GL_COLOR_BUFFER_BIT);
+			glBindVertexArray(vaoId);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(0);
 
-		glUseProgram(shaderProgramId);
-		glUniform4f(vertexColorLocation, rValue, gValue, bValue, 1.0f);
-		glBindVertexArray(vaoId);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+			glfwSwapBuffers(window);
+			glfwPollEvents();
+		}
+	}
+	catch (const VertexShaderCompileError& e) {
+		std::cout << "VERTEX SHADER COMPILE ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
+		mainReturnValue = EXIT_FAILURE;
+	}
+	catch (const FragmentShaderCompileError& e) {
+		std::cout << "FRAGMENT SHADER COMPILE ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
+		mainReturnValue = EXIT_FAILURE;
+	}
+	catch (const ShaderProgramLinkError& e) {
+		std::cout << "SHADER PROGRAM LINK ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
+		mainReturnValue = EXIT_FAILURE;
+	}
+	catch (const std::ios_base::failure& e) {
+		std::cout << "FILES COULDN'T BE READ FROM:\n" << e.what() << std::endl;
+		mainReturnValue = EXIT_FAILURE;
 	}
 	glfwTerminate();
-	return EXIT_SUCCESS;
+	return mainReturnValue;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
