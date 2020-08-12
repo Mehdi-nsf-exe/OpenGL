@@ -42,11 +42,60 @@ void processInput(GLFWwindow* window);
 int main(void) {
 
 	float vertices[] = {
-		// Positions			// texture coords
-		 0.5f,  0.5f, 0.0f,	1.0f, 1.0f,
-		 0.5f, -0.5f, 0.0f,	1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f,	0.0f, 0.0f,
-		-0.5f,  0.5f, 0.0f,	0.0f, 1.0f
+	 -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+	  0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+	  0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	  0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	 -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+	 -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	  0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	  0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	  0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+	 -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+	 -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+	 -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	 -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	 -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	  0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	  0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	  0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	  0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	  0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	  0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+	 -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+	  0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+	  0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	  0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+	 -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+	 -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+	 -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+	  0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+	  0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	  0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+	 -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+	 -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+	};
+
+	glm::vec3 cubePositiones[] = {
+		glm::vec3(0.0f,  0.0f,  0.0f),
+		glm::vec3(2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f,  2.0f, -2.5f),
+		glm::vec3(1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
 	unsigned int indices[] = {
@@ -76,6 +125,7 @@ int main(void) {
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
+	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -142,10 +192,14 @@ int main(void) {
 		std::cout << "Failed to load texture" << std::endl;
 	}
 	stbi_image_free(imageData);
+
+	glm::mat4 viewM(1.0f);
+	viewM = glm::translate(viewM, glm::vec3(0.0f, 0.0f, -3.0f));
+
+	glm::mat4 projectionM;
+	projectionM = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 	
 	int mainReturnValue = EXIT_SUCCESS;
-
-	glm::vec3 rotationAxis(0.0f, 0.0f, 1.0f);
 
 	try {
 		Shader shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
@@ -153,22 +207,27 @@ int main(void) {
 		shader.use();
 		shader.setUniform("texture0", 0);
 		shader.setUniform("texture1", 1);
+		shader.setUniform("viewM", viewM);
+		shader.setUniform("projectionM", projectionM);
 
 		while (!glfwWindowShouldClose(window)) {
 
 			processInput(window);
 
-			glClear(GL_COLOR_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			float currentTime = (float)glfwGetTime();
-			glm::mat4 trans(1.0f);
-			trans = glm::translate(trans, glm::vec3((float)sin(currentTime) / 2.0f, (float)cos(currentTime) / 2.0f, 0.0f));
-			trans = glm::rotate(trans, currentTime, rotationAxis);
-
-			shader.setUniform("transform", trans);
+			float rotationAngle = (float)glfwGetTime() * glm::radians(50.0f);
 
 			glBindVertexArray(vaoId);
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			for (unsigned int i = 0; i < 10; i++) {
+				glm::mat4 modelM(1.0f);
+				modelM = glm::translate(modelM, cubePositiones[i]);
+				float phaseAngle = 20.0f * i;
+				modelM = glm::rotate(modelM, rotationAngle + phaseAngle, glm::vec3(1.0f, 0.3f, 0.5f));
+				shader.setUniform("modelM", modelM);
+
+				glDrawArrays(GL_TRIANGLES, 0, 36);
+			}
 			glBindVertexArray(0);
 
 			glfwSwapBuffers(window);
