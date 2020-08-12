@@ -1,8 +1,12 @@
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
-#include <glad\glad.h>
-#include <GLFW\glfw3.h>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #define	STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -38,11 +42,11 @@ void processInput(GLFWwindow* window);
 int main(void) {
 
 	float vertices[] = {
-		// Positions			// Colors				// texture coords
-		 0.5f,  0.5f, 0.0f,	1.0f, 0.0f, 0.0f,		1.0f, 1.0f,
-		 0.5f, -0.5f, 0.0f,	0.0f, 1.0f, 0.0f,		1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f,	0.0f, 0.0f, 1.0f,		0.0f, 0.0f,
-		-0.5f,  0.5f, 0.0f,	1.0f, 1.0f, 0.0f,		0.0f, 1.0f
+		// Positions			// texture coords
+		 0.5f,  0.5f, 0.0f,	1.0f, 1.0f,
+		 0.5f, -0.5f, 0.0f,	1.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f,	0.0f, 0.0f,
+		-0.5f,  0.5f, 0.0f,	0.0f, 1.0f
 	};
 
 	unsigned int indices[] = {
@@ -84,14 +88,11 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
 
 	GLuint eboId;
 	glGenBuffers(1, &eboId);
@@ -144,6 +145,8 @@ int main(void) {
 	
 	int mainReturnValue = EXIT_SUCCESS;
 
+	glm::vec3 rotationAxis(0.0f, 0.0f, 1.0f);
+
 	try {
 		Shader shader(VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH);
 
@@ -156,6 +159,13 @@ int main(void) {
 			processInput(window);
 
 			glClear(GL_COLOR_BUFFER_BIT);
+
+			float currentTime = (float)glfwGetTime();
+			glm::mat4 trans(1.0f);
+			trans = glm::translate(trans, glm::vec3((float)sin(currentTime) / 2.0f, (float)cos(currentTime) / 2.0f, 0.0f));
+			trans = glm::rotate(trans, currentTime, rotationAxis);
+
+			shader.setUniform("transform", trans);
 
 			glBindVertexArray(vaoId);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

@@ -3,7 +3,10 @@
 #include <string>
 #include <memory>
 
-#include <glad\glad.h>
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #define INFO_LOG_BUFFER_SIZE 512
 
@@ -59,6 +62,7 @@ public:
 	void setUniform(const std::string& name, bool value) const;
 	void setUniform(const std::string& name, int value) const;
 	void setUniform(const std::string& name, float value) const;
+	void setUniform(const std::string& name, const glm::mat4& matrix) const;
 
 	/**
 		Reads the shader program source code form the indicated files.
