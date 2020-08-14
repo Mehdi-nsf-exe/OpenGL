@@ -4,13 +4,14 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
 #define	STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include "Shader.h"
+#include "Camera.h"
 
 #define MAJOR_OPENGL_VERSION 3
 #define MINOR_OPENGL_VERSION 3
@@ -28,16 +29,36 @@
 #define CONTAINER_TEXTURE_INDEX	0
 #define FACE_TEXTURE_INDEX			1
 
+static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+static float deltaTime = 0.0f;
+static float lastFrame = 0.0f;
+
 /**
- * The callback for the glfw window resizing event.
+	The callback for the glfw window resizing event.
  */
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
+/**
+	the mouse callback for the glfw mouse position input.
+ */
+void mousePosCallback(GLFWwindow* window, double xPos, double yPos);
+
+/**
+	the scroll callback for the glfw scroll input.
+ */
+void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
+
 /** 
- * Processes the input of the window passed as a parameter.
- * @param window the glfw window id of the window whose input to be proccessed.
+	Processes the input of the window passed as a parameter.
+	@param window the glfw window id of the window whose input to be proccessed.
  */
 void processInput(GLFWwindow* window);
+
+/**
+	updates the deltaTime every frame if the funcion is called in the game loop.
+*/
+void updateDeltaTime();
 
 int main(void) {
 
@@ -125,6 +146,10 @@ int main(void) {
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mousePosCallback);
+	glfwSetScrollCallback(window, scrollCallback);
+
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -193,11 +218,11 @@ int main(void) {
 	}
 	stbi_image_free(imageData);
 
-	glm::mat4 viewM(1.0f);
-	viewM = glm::translate(viewM, glm::vec3(0.0f, 0.0f, -3.0f));
+	glm::mat4 viewM;
 
 	glm::mat4 projectionM;
-	projectionM = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+
+	const float camTrajectoryRadius = 10.0f;
 	
 	int mainReturnValue = EXIT_SUCCESS;
 
@@ -207,16 +232,23 @@ int main(void) {
 		shader.use();
 		shader.setUniform("texture0", 0);
 		shader.setUniform("texture1", 1);
-		shader.setUniform("viewM", viewM);
-		shader.setUniform("projectionM", projectionM);
 
 		while (!glfwWindowShouldClose(window)) {
 
+			updateDeltaTime();
 			processInput(window);
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			float rotationAngle = (float)glfwGetTime() * glm::radians(50.0f);
+			float currentTime = (float)glfwGetTime();
+
+			viewM = camera.getViewMatrix();
+			shader.setUniform("viewM", viewM);
+
+			projectionM = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+			shader.setUniform("projectionM", projectionM);
+
+			float rotationAngle = currentTime * glm::radians(50.0f);
 
 			glBindVertexArray(vaoId);
 			for (unsigned int i = 0; i < 10; i++) {
@@ -259,8 +291,52 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 }
 
 void processInput(GLFWwindow* window) {
+	
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		camera.move(CameraMovement::FORWARD, deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		camera.move(CameraMovement::BACKWARD, deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		camera.move(CameraMovement::LEFT, deltaTime);
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		camera.move(CameraMovement::RIGHT, deltaTime);
+	}
 }
 
+void updateDeltaTime() {
+	float currentFrame = (float)glfwGetTime();
+	deltaTime = currentFrame - lastFrame;
+	lastFrame = currentFrame;
+}
+
+void mousePosCallback(GLFWwindow* window, double xPos, double yPos) {
+
+	static bool firstMouse = true;
+	static float lastX = 0.0f;
+	static float lastY = 0.0f;
+
+	if (firstMouse) {
+		lastX = xPos;
+		lastY = yPos;
+		firstMouse = false;
+	}
+
+	float xOffset = xPos - lastX;
+	float yOffset = lastY - yPos;
+
+	lastX = xPos;
+	lastY = yPos;
+
+	camera.updateOrientation(xOffset, yOffset);
+}
+
+void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
+	camera.updateZoom((float)yOffset);
+}
