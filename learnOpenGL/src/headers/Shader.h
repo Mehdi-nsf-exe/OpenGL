@@ -63,6 +63,8 @@ public:
 	void setUniform(const std::string& name, int value) const;
 	void setUniform(const std::string& name, float value) const;
 	void setUniform(const std::string& name, const glm::mat4& matrix) const;
+	void setUniform(const std::string& name, const glm::vec3& vector) const;
+	void setUniform(const std::string& name, float x, float y, float z) const;
 
 	/**
 		Reads the shader program source code form the indicated files.
