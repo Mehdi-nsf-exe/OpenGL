@@ -25,8 +25,9 @@
 
 static const char* WINDOW_TITLE = "learnOpenGL";
 
-static const char* VERTEX_SHADER_PATH = "res\\shaders\\shader.vert";
+static const char* OBJECT_VERTEX_SHADER_PATH = "res\\shaders\\noneLightSrc.vert";
 static const char* OBJECT_FRAGMENT_SHADER_PATH = "res\\shaders\\noneLightSrc.frag";
+static const char* LIGHT_VERTEX_SHADER_PATH = "res\\shaders\\lightSrc.vert";
 static const char* LIGHT_FRAGMENT_SHADER_PATH = "res\\shaders\\lightSrc.frag";
 
 static const char* CONTAINER_IMAGE_PATH = "res\\textures\\container.jpg";
@@ -66,35 +67,47 @@ void updateDeltaTime();
 int main(void) {
 
 	float containerVertices[] = {
-		-0.5f, -0.5f, -0.5f,
-		 0.5f, -0.5f, -0.5f,
-		 0.5f,  0.5f, -0.5f,
-		-0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	  0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	 -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	 -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-		-0.5f, -0.5f,  0.5f,
-		 0.5f, -0.5f,  0.5f,
-		 0.5f,  0.5f,  0.5f,
-		-0.5f,  0.5f,  0.5f,
-	};
+	 -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	  0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	  0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	  0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	 -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	 -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-	unsigned int containerIndices[] = {
-		0, 1, 2,
-		2, 3, 0,
+	 -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	 -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	 -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	 -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	 -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	 -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-		1, 5, 6,
-		6, 2, 1,
+	  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-		5, 4, 7,
-		7, 6, 5,
+	 -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	  0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	 -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	 -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-		4, 0, 3,
-		3, 7, 4,
-
-		3, 2, 6,
-		6, 7, 3,
-
-		1, 0, 4,
-		4, 5, 1
+	 -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+	  0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+	  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	 -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	 -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 	};
 
 	float lightSrcVertices[] = {
@@ -170,13 +183,11 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, containerVboId);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(containerVertices), containerVertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	GLuint containerEboId;
-	glGenBuffers(1, &containerEboId);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, containerEboId);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(containerIndices), containerIndices, GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
 
@@ -244,27 +255,33 @@ int main(void) {
 	//stbi_image_free(imageData);
 	//imageData = nullptr;
 
-	glm::mat4 viewM;
-	glm::mat4 projectionM;
+	glm::mat4 viewMat;
+	glm::mat4 projectionMat;
 
-	glm::mat4 objectModelM(1.0f);
+	glm::mat4 objectModelMat(1.0f);
+	glm::mat3 objectNormalMat = glm::mat3(objectModelMat);
+	objectNormalMat = glm::transpose(glm::inverse(objectNormalMat));
 
-	glm::mat4 lightModelM(1.0f);
-	lightModelM = glm::translate(lightModelM, lightPos);
-	lightModelM = glm::scale(lightModelM, glm::vec3(0.2f));
+	glm::mat4 lightModelMat(1.0f);
+	lightModelMat = glm::translate(lightModelMat, lightPos);
+	lightModelMat = glm::scale(lightModelMat, glm::vec3(0.2f));
 	
 	int mainReturnValue = EXIT_SUCCESS;
 
 	try {
 
-		Shader lightSrcShader(VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
+		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
 		lightSrcShader.use();
-		lightSrcShader.setUniform("lightColor", 1.0f, 1.0f, 1.0f);
+		lightSrcShader.setUniform("LightColor", 1.0f, 1.0f, 1.0f);
 
-		Shader objectCubeShader(VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
+		Shader objectCubeShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
 		objectCubeShader.use();
-		objectCubeShader.setUniform("objectColor", 1.0f, 0.5f, 0.31f);
-		objectCubeShader.setUniform("lightColor", 1.0f, 1.0f, 1.0f);
+		objectCubeShader.setUniform("ObjectColor", 1.0f, 0.5f, 0.31f);
+		objectCubeShader.setUniform("LightColor", 1.0f, 1.0f, 1.0f);
+		objectCubeShader.setUniform("LightPos", lightPos);
+		objectCubeShader.setUniform("AmbientStrength", 0.1f);
+		objectCubeShader.setUniform("SpecularStrength", 0.4f);
+		objectCubeShader.setUniform("Shininess", 32);
 
 
 		while (!glfwWindowShouldClose(window)) {
@@ -276,27 +293,29 @@ int main(void) {
 
 			float currentTime = (float)glfwGetTime();
 
-			viewM = camera.getViewMatrix();
+			viewMat = camera.getViewMatrix();
 
-			projectionM = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+			projectionMat = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
 			lightSrcShader.use();
-			lightSrcShader.setUniform("modelM", lightModelM);
-			lightSrcShader.setUniform("viewM", viewM);
-			lightSrcShader.setUniform("projectionM", projectionM);
+			lightSrcShader.setUniform("ModelMat", lightModelMat);
+			lightSrcShader.setUniform("ViewMat", viewMat);
+			lightSrcShader.setUniform("ProjectionMat", projectionMat);
 
 			glBindVertexArray(lightSrcVaoId);
 
 			glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0);
 
 			objectCubeShader.use();
-			objectCubeShader.setUniform("modelM", objectModelM);
-			objectCubeShader.setUniform("viewM", viewM);
-			objectCubeShader.setUniform("projectionM", projectionM);
+			objectCubeShader.setUniform("ModelMat", objectModelMat);
+			objectCubeShader.setUniform("NormalMat", objectNormalMat);
+			objectCubeShader.setUniform("ViewMat", viewMat);
+			objectCubeShader.setUniform("ProjectionMat", projectionMat);
+			objectCubeShader.setUniform("ViewPos", camera.getPosition());
 
 			glBindVertexArray(containerVaoId);
 
-			glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0);
+			glDrawArrays(GL_TRIANGLES, 0, sizeof(containerVertices));
 
 			glBindVertexArray(0);
 

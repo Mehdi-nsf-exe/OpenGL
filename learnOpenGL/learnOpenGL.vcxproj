@@ -160,8 +160,9 @@
   <ItemGroup>
     <None Include="res\shaders\noneLightSrc.frag" />
     <None Include="res\shaders\lightSrc.frag" />
-    <None Include="res\shaders\shader.vert" />
+    <None Include="res\shaders\lightSrc.vert" />
     <None Include="res\fshaders\vertexShader.glsl" />
+    <None Include="res\shaders\noneLightSrc.vert" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\textures\awesomeface.png" />

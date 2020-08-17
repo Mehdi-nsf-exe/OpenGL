@@ -52,9 +52,16 @@ public:
 	);
 
 	/**
+		Gets the position of the camera in world space.
+	 */
+	inline glm::vec3 getPosition() const {
+		return position;
+	}
+
+	/**
 		Gets the zoom of the camera.
 	 */
-	inline float getZoom() {
+	inline float getZoom() const {
 		return zoom;
 	}
 
@@ -63,7 +70,7 @@ public:
 
 		@return the view matrix of the camera.
 	 */
-	inline glm::mat4 getViewMatrix() {
+	inline glm::mat4 getViewMatrix() const {
 		return glm::lookAt(position, position + front, up);
 	}
 
