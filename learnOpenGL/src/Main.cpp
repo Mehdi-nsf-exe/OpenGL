@@ -68,46 +68,46 @@ int main(void) {
 
 	float containerVertices[] = {
 		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	  0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	  0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	 -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	 -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-	 -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	  0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	  0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	  0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	 -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	 -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-	 -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-	 -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-	 -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-	 -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-	 -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-	 -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-	  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-	  0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-	  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-	  0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-	  0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-	  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-	 -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-	  0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-	  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-	  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-	 -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-	 -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-	 -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-	  0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-	  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-	  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-	 -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-	 -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 	};
 
 	float lightSrcVertices[] = {
@@ -272,16 +272,15 @@ int main(void) {
 
 		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
 		lightSrcShader.use();
-		lightSrcShader.setUniform("LightColor", 1.0f, 1.0f, 1.0f);
 
 		Shader objectCubeShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
 		objectCubeShader.use();
-		objectCubeShader.setUniform("ObjectColor", 1.0f, 0.5f, 0.31f);
-		objectCubeShader.setUniform("LightColor", 1.0f, 1.0f, 1.0f);
-		objectCubeShader.setUniform("LightPos", lightPos);
-		objectCubeShader.setUniform("AmbientStrength", 0.1f);
-		objectCubeShader.setUniform("SpecularStrength", 0.4f);
-		objectCubeShader.setUniform("Shininess", 32);
+		objectCubeShader.setUniform("material.ambient", 1.0f, 0.5f, 0.31f);
+		objectCubeShader.setUniform("material.diffuse", 1.0f, 0.5f, 0.31f);
+		objectCubeShader.setUniform("material.specular", 0.5f, 0.5f, 0.5f);
+		objectCubeShader.setUniform("material.shininess", 32.0f);
+		objectCubeShader.setUniform("light.position", lightPos);
+		objectCubeShader.setUniform("light.specular", 1.0f, 1.0f, 1.0f);
 
 
 		while (!glfwWindowShouldClose(window)) {
@@ -297,10 +296,13 @@ int main(void) {
 
 			projectionMat = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
+			glm::vec3 lightColor(sin(currentTime * 2.0f), sin(currentTime * 0.7f), sin(currentTime * 1.3f));
+
 			lightSrcShader.use();
 			lightSrcShader.setUniform("ModelMat", lightModelMat);
 			lightSrcShader.setUniform("ViewMat", viewMat);
 			lightSrcShader.setUniform("ProjectionMat", projectionMat);
+			lightSrcShader.setUniform("LightColor", lightColor);
 
 			glBindVertexArray(lightSrcVaoId);
 
@@ -312,6 +314,13 @@ int main(void) {
 			objectCubeShader.setUniform("ViewMat", viewMat);
 			objectCubeShader.setUniform("ProjectionMat", projectionMat);
 			objectCubeShader.setUniform("ViewPos", camera.getPosition());
+
+			glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
+			glm::vec3 ambientColor = lightColor * glm::vec3(0.2f);
+
+			objectCubeShader.setUniform("light.diffuse", diffuseColor);
+			objectCubeShader.setUniform("light.ambient", ambientColor);
+			objectCubeShader.setUniform("light.specular", lightColor);
 
 			glBindVertexArray(containerVaoId);
 
