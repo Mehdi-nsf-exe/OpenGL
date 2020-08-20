@@ -42,6 +42,18 @@ public:
 	Shader(const char* vertexPath, const char* fragmentPath);
 
 	/**
+		Deletes the shader program form the GPU.
+	 */
+	~Shader();
+
+	/**
+		A shader object shouldn't be copied since it deletes the shader program form the GPU
+		when it goes out of scope.
+	 */
+	Shader(const Shader& shader) = delete;
+	Shader& operator=(const Shader& shader) = delete;
+
+	/**
 		Creates and compiles a shader program from the indicated shader source code.
 		@param shaderSrc The struct that contains the shader source code.
 		@throws FertexShaderCompileError, FragmentShaderCompileError, ShaderProgramLinkError If any of the corresponding errors

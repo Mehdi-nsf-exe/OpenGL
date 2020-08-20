@@ -50,6 +50,10 @@ void Shader::getShaderSrc(ShaderSrc& outShaderSrc, const char* vertexPath, const
 	outShaderSrc.fragmentShader = fragmentShaderSStream.str();
 }
 
+Shader::~Shader() {
+	GLCall(glDeleteProgram(programId));
+}
+
 void Shader::compileShader(const ShaderSrc& shaderSrc) {
 
 	unsigned int vertexShaderId, fragmentShaderId;

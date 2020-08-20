@@ -386,6 +386,16 @@ int main(void) {
 		std::cout << "FILES COULDN'T BE READ FROM:\n" << e.what() << std::endl;
 		mainReturnValue = EXIT_FAILURE;
 	}
+
+	GLCall(glDeleteVertexArrays(1, &containerVaoId));
+	GLCall(glDeleteBuffers(1, &containerVboId));
+	GLCall(glDeleteTextures(1, &diffuseMapId));
+	GLCall(glDeleteTextures(1, &specularMapId));
+	
+	GLCall(glDeleteVertexArrays(1, &lightSrcVaoId));
+	GLCall(glDeleteBuffers(1, &lightSrcVboId));
+	GLCall(glDeleteBuffers(1, &lightSrcEboId));
+
 	glfwTerminate();
 	return mainReturnValue;
 }
