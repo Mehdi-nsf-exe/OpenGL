@@ -8,6 +8,8 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 
+#include "OpenGLErrorHandling.h"
+
 #define INFO_LOG_BUFFER_SIZE 512
 
 /** 
@@ -51,7 +53,7 @@ public:
 		Use/activate the shader. 
 	 */
 	inline void use() const {
-		glUseProgram(programId);
+		GLCall(glUseProgram(programId));
 	}
 
 	/**
@@ -89,6 +91,11 @@ private:
 		@param shaderSrc The shader's source code.
 	 */
 	void compileShader(const ShaderSrc& shaderSrc);
+
+	/**
+		Gets the location of the uniform with the indicated name.
+	 */
+	int getUniformLocation(const std::string& name) const;
 };
 
 
@@ -100,7 +107,7 @@ public:
 	/**
 		Creates and initializes a ShaderCompileError.
 	 */
-	explicit ShaderCompileError();
+	explicit ShaderCompileError() {}
 
 };
 
@@ -112,7 +119,7 @@ public:
 	/**
 		Creates a vertex shader compile error.
 	 */
-	explicit VertexShaderCompileError();
+	explicit VertexShaderCompileError() {}
 };
 
 /**
@@ -123,7 +130,7 @@ public:
 	/**
 		Creates the fragment shader compile error.
 	 */
-	explicit FragmentShaderCompileError();
+	explicit FragmentShaderCompileError() {}
 };
 
 /**
@@ -134,6 +141,11 @@ public:
 	/**
 		Creates the shader porgram link error.
 	 */
-	explicit ShaderProgramLinkError();
+	explicit ShaderProgramLinkError() {}
+};
+
+class InvalidUniformLocation : public std::exception {
+public:
+	explicit InvalidUniformLocation() {}
 };
 

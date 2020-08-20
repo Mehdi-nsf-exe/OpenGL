@@ -58,85 +58,83 @@ void Shader::compileShader(const ShaderSrc& shaderSrc) {
 	const char* vertexShaderSrc = shaderSrc.vertexShader.c_str();
 	const char* fragmentShaderSrc = shaderSrc.fragmentShader.c_str();
 
-	vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShaderId, 1, &vertexShaderSrc, NULL);
-	glCompileShader(vertexShaderId);
+	GLCall(vertexShaderId = glCreateShader(GL_VERTEX_SHADER));
+	GLCall(glShaderSource(vertexShaderId, 1, &vertexShaderSrc, NULL));
+	GLCall(glCompileShader(vertexShaderId));
 
-	glGetShaderiv(vertexShaderId, GL_COMPILE_STATUS, &success);
+	GLCall(glGetShaderiv(vertexShaderId, GL_COMPILE_STATUS, &success));
 	if (!success) {
-		glGetShaderInfoLog(vertexShaderId, INFO_LOG_BUFFER_SIZE, NULL, infoLogBuffer);
+		GLCall(glGetShaderInfoLog(vertexShaderId, INFO_LOG_BUFFER_SIZE, NULL, infoLogBuffer));
 		throw VertexShaderCompileError();
 	}
 
-	fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShaderId, 1, &fragmentShaderSrc, NULL);
-	glCompileShader(fragmentShaderId);
+	GLCall(fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER));
+	GLCall(glShaderSource(fragmentShaderId, 1, &fragmentShaderSrc, NULL));
+	GLCall(glCompileShader(fragmentShaderId));
 
-	glGetShaderiv(fragmentShaderId, GL_COMPILE_STATUS, &success);
+	GLCall(glGetShaderiv(fragmentShaderId, GL_COMPILE_STATUS, &success));
 	if (!success) {
-		glGetShaderInfoLog(fragmentShaderId, INFO_LOG_BUFFER_SIZE, NULL, infoLogBuffer);
+		GLCall(glGetShaderInfoLog(fragmentShaderId, INFO_LOG_BUFFER_SIZE, NULL, infoLogBuffer));
 		throw FragmentShaderCompileError();
 	}
 
-	programId = glCreateProgram();
-	glAttachShader(programId, vertexShaderId);
-	glAttachShader(programId, fragmentShaderId);
-	glLinkProgram(programId);
+	GLCall(programId = glCreateProgram());
+	GLCall(glAttachShader(programId, vertexShaderId));
+	GLCall(glAttachShader(programId, fragmentShaderId));
+	GLCall(glLinkProgram(programId));
 
-	glGetProgramiv(programId, GL_LINK_STATUS, &success);
+	GLCall(glGetProgramiv(programId, GL_LINK_STATUS, &success));
 	if (!success) {
-		glGetProgramInfoLog(programId, INFO_LOG_BUFFER_SIZE, NULL, infoLogBuffer);
+		GLCall(glGetProgramInfoLog(programId, INFO_LOG_BUFFER_SIZE, NULL, infoLogBuffer));
 		throw ShaderProgramLinkError();
 	}
 
-	glDeleteShader(vertexShaderId);
-	glDeleteShader(fragmentShaderId);
+	GLCall(glDeleteShader(vertexShaderId));
+	GLCall(glDeleteShader(fragmentShaderId));
+}
+
+int Shader::getUniformLocation(const std::string& name) const {
+	int location;
+	GLCall(location = glGetUniformLocation(programId, name.c_str()));
+	if (location == -1) {
+		throw InvalidUniformLocation();
+	}
+	return location;
 }
 
 void Shader::setUniform(const std::string& name, bool value) const {
-	glUniform1i(glGetUniformLocation(programId, name.c_str()), (int)value);
+	int location = getUniformLocation(name);
+	GLCall(glUniform1i(location, (int)value));
 }
 
 void Shader::setUniform(const std::string& name, int value) const {
-	glUniform1i(glGetUniformLocation(programId, name.c_str()), value);
+	int location = getUniformLocation(name);
+	GLCall(glUniform1i(location, value));
 }
 
 void Shader::setUniform(const std::string& name, float value) const {
-	glUniform1f(glGetUniformLocation(programId, name.c_str()), value);
+	int location = getUniformLocation(name);
+	GLCall(glUniform1f(location, value));
 }
 
 void Shader::setUniform(const std::string& name, const glm::mat4& matrix) const {
-	glUniformMatrix4fv(glGetUniformLocation(programId, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
+	int location = getUniformLocation(name);
+	GLCall(glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix)));
 }
 
 void Shader::setUniform(const std::string& name, const glm::mat3& matrix) const {
-	glUniformMatrix3fv(glGetUniformLocation(programId, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
+	int location = getUniformLocation(name);
+	GLCall(glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(matrix)));
 }
 
 void Shader::setUniform(const std::string& name, const glm::vec3& vector) const {
-	glUniform3fv(glGetUniformLocation(programId, name.c_str()), 1, glm::value_ptr(vector));
+	int location = getUniformLocation(name);
+	GLCall(glUniform3fv(location, 1, glm::value_ptr(vector)));
 }
 
 void Shader::setUniform(const std::string& name, float x, float y, float z) const {
-	glUniform3f(glGetUniformLocation(programId, name.c_str()), x, y, z);
-}
-
-// Exceptions:
-
-ShaderCompileError::ShaderCompileError() {
-	std::exception();
-}
-
-VertexShaderCompileError::VertexShaderCompileError() {
-	ShaderCompileError();
-}
-
-FragmentShaderCompileError::FragmentShaderCompileError() {
-	ShaderCompileError();
-}
-
-ShaderProgramLinkError::ShaderProgramLinkError() {
-	ShaderCompileError();
+	int location = getUniformLocation(name);
+	GLCall(glUniform3f(location, x, y, z));
 }
 
 
