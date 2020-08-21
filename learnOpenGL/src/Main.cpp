@@ -23,13 +23,13 @@
 
 static const char* WINDOW_TITLE = "learnOpenGL";
 
-static const char* OBJECT_VERTEX_SHADER_PATH = "res\\shaders\\noneLightSrc.vert";
-static const char* OBJECT_FRAGMENT_SHADER_PATH = "res\\shaders\\noneLightSrc.frag";
-static const char* LIGHT_VERTEX_SHADER_PATH = "res\\shaders\\lightSrc.vert";
-static const char* LIGHT_FRAGMENT_SHADER_PATH = "res\\shaders\\lightSrc.frag";
+static const char* OBJECT_VERTEX_SHADER_PATH = "res/shaders/noneLightSrc.vert";
+static const char* OBJECT_FRAGMENT_SHADER_PATH = "res/shaders/noneLightSrc.frag";
+static const char* LIGHT_VERTEX_SHADER_PATH = "res/shaders/lightSrc.vert";
+static const char* LIGHT_FRAGMENT_SHADER_PATH = "res/shaders/lightSrc.frag";
 
-static const char* CONTAINER_IMAGE_PATH = "res\\textures\\container2.png";
-static const char* CONTAINER_SPEC_PATH = "res\\textures\\container2_specular.png";
+static const char* CONTAINER_IMAGE_PATH = "res/textures/container2.png";
+static const char* CONTAINER_SPEC_PATH = "res/textures/container2_specular.png";
 
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -242,55 +242,6 @@ int main(void) {
 
 	GLCall(glBindVertexArray(0));
 
-	//int imageWidth, imageHeight, nrChannels;
-	//unsigned char* imageData;
-	//stbi_set_flip_vertically_on_load(true);
-	//
-	//unsigned int diffuseMapId;
-	//GLCall(glGenTextures(1, &diffuseMapId));
-	//GLCall(glActiveTexture(GL_TEXTURE0));
-	//GLCall(glBindTexture(GL_TEXTURE_2D, diffuseMapId));
-	//
-	//GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-	//GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-	//GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
-	//GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-	//
-	//imageData = stbi_load(CONTAINER_IMAGE_PATH, &imageWidth, &imageHeight, &nrChannels, 0);
-	//if (imageData) {
-	//	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData));
-	//	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
-	//	stbi_image_free(imageData);
-	//	imageData = nullptr;
-	//}
-	//else {
-	//	std::cout << "Failed to load texture" << std::endl;
-	//}
-	//unsigned int specularMapId;
-	//GLCall(glGenTextures(1, &specularMapId));
-	//GLCall(glActiveTexture(GL_TEXTURE1));
-	//GLCall(glBindTexture(GL_TEXTURE_2D, specularMapId));
-	//
-	//GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-	//GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-	//GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
-	//GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-	//
-	//imageData = stbi_load(CONTAINER_SPEC_PATH, &imageWidth, &imageHeight, &nrChannels, 0);
-	//if (imageData) {
-	//	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData));
-	//	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
-	//	stbi_image_free(imageData);
-	//	imageData = nullptr;
-	//}
-	//else {
-	//	std::cout << "failed to load texture" << std::endl;
-	//}
-
-	unsigned int diffuseMapId = loadTexture(CONTAINER_IMAGE_PATH);
-	unsigned int specularMapId = loadTexture(CONTAINER_IMAGE_PATH);
-	
-
 	glm::mat4 viewMat;
 	glm::mat4 projectionMat;
 
@@ -301,14 +252,20 @@ int main(void) {
 	glm::mat4 lightModelMat(1.0f);
 	lightModelMat = glm::translate(lightModelMat, lightPos);
 	lightModelMat = glm::scale(lightModelMat, glm::vec3(0.2f));
+
+	unsigned int diffuseMapId;
+	unsigned int specularMapId;
 	
 	int mainReturnValue = EXIT_SUCCESS;
 
 	try {
 
-		//Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
-		//lightSrcShader.use();
-		//lightSrcShader.setUniform("LightColor", 1.0f, 1.0f, 1.0f);
+		diffuseMapId = loadTexture(CONTAINER_IMAGE_PATH);
+		specularMapId = loadTexture(CONTAINER_SPEC_PATH);
+
+		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
+		lightSrcShader.use();
+		lightSrcShader.setUniform("LightColor", 1.0f, 1.0f, 1.0f);
 
 		Shader objectCubeShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
 		objectCubeShader.use();
@@ -319,10 +276,16 @@ int main(void) {
 		GLCall(glActiveTexture(GL_TEXTURE1));
 		GLCall(glBindTexture(GL_TEXTURE_2D, specularMapId));
 		objectCubeShader.setUniform("material.shininess", 32.0f);
-		objectCubeShader.setUniform("light.direction", -0.2f, -1.0f, -0.3f);
+
+		objectCubeShader.setUniform("light.position", lightPos);
+
 		objectCubeShader.setUniform("light.diffuse", 1.0f, 1.0f, 1.0f);
 		objectCubeShader.setUniform("light.ambient", 0.2f, 0.2f, 0.2f);
 		objectCubeShader.setUniform("light.specular", 1.0f, 1.0f, 1.0f);
+
+		objectCubeShader.setUniform("light.constant", 1.0f);
+		objectCubeShader.setUniform("light.linear", 0.09f);
+		objectCubeShader.setUniform("light.quadratic", 0.032f);
 
 
 		while (!glfwWindowShouldClose(window)) {
@@ -338,14 +301,14 @@ int main(void) {
 
 			projectionMat = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
-			//lightSrcShader.use();
-			//lightSrcShader.setUniform("ModelMat", lightModelMat);
-			//lightSrcShader.setUniform("ViewMat", viewMat);
-			//lightSrcShader.setUniform("ProjectionMat", projectionMat);
-			//
-			//glBindVertexArray(lightSrcVaoId);
-			//
-			//glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0);
+			lightSrcShader.use();
+			lightSrcShader.setUniform("ModelMat", lightModelMat);
+			lightSrcShader.setUniform("ViewMat", viewMat);
+			lightSrcShader.setUniform("ProjectionMat", projectionMat);
+			
+			glBindVertexArray(lightSrcVaoId);
+			
+			glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0);
 
 			objectCubeShader.use();
 			objectCubeShader.setUniform("ModelMat", objectModelMat);
@@ -370,16 +333,20 @@ int main(void) {
 			glfwPollEvents();
 		}
 	}
-	catch (const VertexShaderCompileError& e) {
+	catch (const Shader::VertexShaderCompileError& e) {
 		std::cout << "VERTEX SHADER COMPILE ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
 		mainReturnValue = EXIT_FAILURE;
 	}
-	catch (const FragmentShaderCompileError& e) {
+	catch (const Shader::FragmentShaderCompileError& e) {
 		std::cout << "FRAGMENT SHADER COMPILE ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
 		mainReturnValue = EXIT_FAILURE;
 	}
-	catch (const ShaderProgramLinkError& e) {
+	catch (const Shader::ShaderProgramLinkError& e) {
 		std::cout << "SHADER PROGRAM LINK ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
+		mainReturnValue = EXIT_FAILURE;
+	}
+	catch (const TextureLoadingFailure & e) {
+		std::cout << "TEXTURE LOADING FAILURE\n";
 		mainReturnValue = EXIT_FAILURE;
 	}
 	catch (const std::ios_base::failure& e) {

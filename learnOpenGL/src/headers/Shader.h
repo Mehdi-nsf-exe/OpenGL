@@ -32,12 +32,51 @@ private:
 public:
 
 	/**
+		Exception that indicates that an error occured in the shader program compilation/linking.
+	 */
+	class ShaderCompileError : public std::exception {
+	public:
+		explicit ShaderCompileError() {}
+	};
+
+	/**
+		Exception that indicates that an error occured in the vertex shader compilation.
+	 */
+	class VertexShaderCompileError : public ShaderCompileError {
+	public:
+		explicit VertexShaderCompileError() {}
+	};
+
+	/**
+		Exception that indicates that an error occured in the fragment shader compilation.
+	 */
+	class FragmentShaderCompileError : public ShaderCompileError {
+	public:
+		explicit FragmentShaderCompileError() {}
+	};
+
+	/**
+		Exception that indicates that an error occured in the shader program linking.
+	 */
+	class ShaderProgramLinkError : public ShaderCompileError {
+	public:
+		explicit ShaderProgramLinkError() {}
+	};
+
+	/**
+		Exception that is thrown if OpenGL returns -1 for a uniform location.
+	 */
+	class InvalidUniformLocation : public std::exception {
+	public:
+		explicit InvalidUniformLocation() {}
+	};
+
+	/**
 		Reads the source code of the shader and builds it.
 		@param vertexPath The path of the vertex shader's source code.
 		@param fragmentPath The path of the fragment shader's source code.
 		@throws std::ifstream::failure if the file is not succesfully read.
-		@throws FertexShaderCompileError, FragmentShaderCompileError, ShaderProgramLinkError If any of the corresponding errors
-		accured during shader compilation.
+		@throws FertexShaderCompileError, FragmentShaderCompileError, ShaderProgramLinkError If any of the corresponding errors accured during shader compilation.
 	 */
 	Shader(const char* vertexPath, const char* fragmentPath);
 
@@ -111,53 +150,5 @@ private:
 };
 
 
-/**
-	Exception that indicates that an error occured in the shader program compilation/linking.
- */
-class ShaderCompileError : public std::exception {
-public:
-	/**
-		Creates and initializes a ShaderCompileError.
-	 */
-	explicit ShaderCompileError() {}
 
-};
-
-/**
-	Exception that indicates that an error occured in the vertex shader compilation.
- */
-class VertexShaderCompileError : public ShaderCompileError {
-public:
-	/**
-		Creates a vertex shader compile error.
-	 */
-	explicit VertexShaderCompileError() {}
-};
-
-/**
-	Exception that indicates that an error occured in the fragment shader compilation.
- */
-class FragmentShaderCompileError : public ShaderCompileError {
-public:
-	/**
-		Creates the fragment shader compile error.
-	 */
-	explicit FragmentShaderCompileError() {}
-};
-
-/**
-	Exception that indicates that an error occured in the shader program linking.
- */
-class ShaderProgramLinkError : public ShaderCompileError {
-public:
-	/**
-		Creates the shader porgram link error.
-	 */
-	explicit ShaderProgramLinkError() {}
-};
-
-class InvalidUniformLocation : public std::exception {
-public:
-	explicit InvalidUniformLocation() {}
-};
 
