@@ -59,6 +59,13 @@ public:
 	}
 
 	/**
+		Gets the front of the camera.
+	 */
+	inline glm::vec3 getFront() const {
+		return front;
+	}
+
+	/**
 		Gets the zoom of the camera.
 	 */
 	inline float getZoom() const {

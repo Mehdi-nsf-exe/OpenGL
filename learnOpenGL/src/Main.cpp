@@ -263,29 +263,31 @@ int main(void) {
 		diffuseMapId = loadTexture(CONTAINER_IMAGE_PATH);
 		specularMapId = loadTexture(CONTAINER_SPEC_PATH);
 
-		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
-		lightSrcShader.use();
-		lightSrcShader.setUniform("LightColor", 1.0f, 1.0f, 1.0f);
+		//Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
+		//lightSrcShader.use();
+		//lightSrcShader.setUniform("LightColor", 1.0f, 1.0f, 1.0f);
 
-		Shader objectCubeShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
-		objectCubeShader.use();
-		objectCubeShader.setUniform("material.diffuse", 0);
+		Shader noneLightSrcShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
+		noneLightSrcShader.use();
+		noneLightSrcShader.setUniform("material.diffuse", 0);
 		GLCall(glActiveTexture(GL_TEXTURE0));
 		GLCall(glBindTexture(GL_TEXTURE_2D, diffuseMapId));
-		objectCubeShader.setUniform("material.specular", 1);
+		noneLightSrcShader.setUniform("material.specular", 1);
 		GLCall(glActiveTexture(GL_TEXTURE1));
 		GLCall(glBindTexture(GL_TEXTURE_2D, specularMapId));
-		objectCubeShader.setUniform("material.shininess", 32.0f);
+		noneLightSrcShader.setUniform("material.shininess", 32.0f);
 
-		objectCubeShader.setUniform("light.position", lightPos);
+		noneLightSrcShader.setUniform("light.innerCutOff", glm::cos(glm::radians(12.5f)));
+		noneLightSrcShader.setUniform("light.outerCutOff", glm::cos(glm::radians(17.5f)));
 
-		objectCubeShader.setUniform("light.diffuse", 1.0f, 1.0f, 1.0f);
-		objectCubeShader.setUniform("light.ambient", 0.2f, 0.2f, 0.2f);
-		objectCubeShader.setUniform("light.specular", 1.0f, 1.0f, 1.0f);
 
-		objectCubeShader.setUniform("light.constant", 1.0f);
-		objectCubeShader.setUniform("light.linear", 0.09f);
-		objectCubeShader.setUniform("light.quadratic", 0.032f);
+		noneLightSrcShader.setUniform("light.diffuse", 1.0f, 1.0f, 1.0f);
+		noneLightSrcShader.setUniform("light.ambient", 0.1f, 0.1f, 0.1f);
+		noneLightSrcShader.setUniform("light.specular", 1.0f, 1.0f, 1.0f);
+
+		noneLightSrcShader.setUniform("light.constant", 1.0f);
+		noneLightSrcShader.setUniform("light.linear", 0.045f);
+		noneLightSrcShader.setUniform("light.quadratic", 0.0075f);
 
 
 		while (!glfwWindowShouldClose(window)) {
@@ -301,20 +303,22 @@ int main(void) {
 
 			projectionMat = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
-			lightSrcShader.use();
-			lightSrcShader.setUniform("ModelMat", lightModelMat);
-			lightSrcShader.setUniform("ViewMat", viewMat);
-			lightSrcShader.setUniform("ProjectionMat", projectionMat);
-			
-			glBindVertexArray(lightSrcVaoId);
-			
-			glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0);
+			//lightSrcShader.use();
+			//lightSrcShader.setUniform("ModelMat", lightModelMat);
+			//lightSrcShader.setUniform("ViewMat", viewMat);
+			//lightSrcShader.setUniform("ProjectionMat", projectionMat);
+			//
+			//glBindVertexArray(lightSrcVaoId);
+			//
+			//glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0);
 
-			objectCubeShader.use();
-			objectCubeShader.setUniform("ModelMat", objectModelMat);
-			objectCubeShader.setUniform("ViewMat", viewMat);
-			objectCubeShader.setUniform("ProjectionMat", projectionMat);
-			objectCubeShader.setUniform("ViewPos", camera.getPosition());
+			noneLightSrcShader.use();
+			noneLightSrcShader.setUniform("ViewMat", viewMat);
+			noneLightSrcShader.setUniform("ProjectionMat", projectionMat);
+			noneLightSrcShader.setUniform("ViewPos", camera.getPosition());
+
+			noneLightSrcShader.setUniform("light.position", camera.getPosition());
+			noneLightSrcShader.setUniform("light.direction", camera.getFront());
 
 			GLCall(glBindVertexArray(containerVaoId));
 
@@ -323,7 +327,7 @@ int main(void) {
 				objectModelMat = glm::translate(objectModelMat, containerPositions[i]);
 				float angle = 20.0f * i;
 				objectModelMat = glm::rotate(objectModelMat, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-				objectCubeShader.setUniform("ModelMat", objectModelMat);
+				noneLightSrcShader.setUniform("ModelMat", objectModelMat);
 				GLCall(glDrawArrays(GL_TRIANGLES, 0, 36));
 			}
 

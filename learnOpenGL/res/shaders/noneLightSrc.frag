@@ -2,6 +2,9 @@
 
 struct Light {
 	vec3 position;
+	vec3 direction;
+	float innerCutOff;
+	float outerCutOff;
 
 	vec3 ambient;
 	vec3 diffuse;
@@ -30,12 +33,14 @@ out vec4 FragColor;
 
 void main() {
 
-	// ambient
+	
+	vec3 lightDir = normalize(light.position - FragPos);
+
+	// ambient is the same for all the fragments so that they can be seen.
 	vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
 
 	// diffuse
 	vec3 normal = normalize(Normal);
-	vec3 lightDir = normalize(light.position - FragPos);
 	float diff =  max(dot(normal, lightDir), 0);
 	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
 
@@ -50,9 +55,13 @@ void main() {
 	float attenuation = 1.0 / 
 		(light.constant + light.linear * distanceToLight + light.quadratic * (distanceToLight * distanceToLight));
 
-	ambient *= attenuation;
-	diffuse *= attenuation;
-	specular *= attenuation;
+	// spot light intensity.
+	float theta = dot(lightDir, normalize(-light.direction));
+	float epsilon = light.innerCutOff - light.outerCutOff;
+	float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+
+	diffuse *= attenuation * intensity;
+	specular *= attenuation * intensity;
 
 	FragColor = vec4(ambient + diffuse + specular, 1.0);
 }
