@@ -10,7 +10,7 @@
 
 #include "OpenGLErrorHandling.h"
 
-#define INFO_LOG_BUFFER_SIZE 512
+#define INFO_LOG_BUFFER_SIZE 1024
 
 /** 
 	the source code of an openGL shader program.

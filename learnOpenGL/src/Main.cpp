@@ -171,8 +171,6 @@ int main(void) {
 		4, 5, 1
 	};
 
-	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MAJOR_OPENGL_VERSION);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, MINOR_OPENGL_VERSION);
@@ -242,16 +240,26 @@ int main(void) {
 
 	GLCall(glBindVertexArray(0));
 
+	glm::vec3 pointLightsPositions[] = {
+		glm::vec3(-4.0f,  2.0f, -12.0f),
+		glm::vec3( 2.3f, -3.3f, -4.0f),
+		glm::vec3( 0.0f,  0.0f,  3.0f),
+		glm::vec3( 0.7f,  0.2f,  2.0f)
+	};
+
+	glm::vec3 pointLightsColors[] = {
+		glm::vec3(1.0f, 1.0f, 1.0f),
+		glm::vec3(1.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f)
+	};
+
 	glm::mat4 viewMat;
 	glm::mat4 projectionMat;
 
 	glm::mat4 objectModelMat(1.0f);
 	glm::mat3 objectNormalMat = glm::mat3(objectModelMat);
 	objectNormalMat = glm::transpose(glm::inverse(objectNormalMat));
-
-	glm::mat4 lightModelMat(1.0f);
-	lightModelMat = glm::translate(lightModelMat, lightPos);
-	lightModelMat = glm::scale(lightModelMat, glm::vec3(0.2f));
 
 	unsigned int diffuseMapId;
 	unsigned int specularMapId;
@@ -263,12 +271,11 @@ int main(void) {
 		diffuseMapId = loadTexture(CONTAINER_IMAGE_PATH);
 		specularMapId = loadTexture(CONTAINER_SPEC_PATH);
 
-		//Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
-		//lightSrcShader.use();
-		//lightSrcShader.setUniform("LightColor", 1.0f, 1.0f, 1.0f);
+		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
 
 		Shader noneLightSrcShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
 		noneLightSrcShader.use();
+		// Material constant uniforms
 		noneLightSrcShader.setUniform("material.diffuse", 0);
 		GLCall(glActiveTexture(GL_TEXTURE0));
 		GLCall(glBindTexture(GL_TEXTURE_2D, diffuseMapId));
@@ -276,19 +283,52 @@ int main(void) {
 		GLCall(glActiveTexture(GL_TEXTURE1));
 		GLCall(glBindTexture(GL_TEXTURE_2D, specularMapId));
 		noneLightSrcShader.setUniform("material.shininess", 32.0f);
+		// Directional light constant uniforms
+		noneLightSrcShader.setUniform("DirLight.direction", 0.2f, -1.0f, 0.3f);
+		noneLightSrcShader.setUniform("DirLight.ambient", 0.1f, 0.1f, 0.0f);
+		noneLightSrcShader.setUniform("DirLight.diffuse", 0.75f, 0.75f, 0.0f);
+		noneLightSrcShader.setUniform("DirLight.specular", 0.75f, 0.75f, 0.0f);
+		// Flash light constant uniforms
+		noneLightSrcShader.setUniform("FlashLight.pointLightProp.diffuse", 0.8f, 1.0f, 0.2f);
+		noneLightSrcShader.setUniform("FlashLight.pointLightProp.ambient", 0.08f, 0.1f, 0.02f);
+		noneLightSrcShader.setUniform("FlashLight.pointLightProp.specular", 0.8f, 1.0f, 0.2f);
+		noneLightSrcShader.setUniform("FlashLight.pointLightProp.constant", 1.0f);
+		noneLightSrcShader.setUniform("FlashLight.pointLightProp.linear", 0.14f);
+		noneLightSrcShader.setUniform("FlashLight.pointLightProp.quadratic", 0.07f);
+		noneLightSrcShader.setUniform("FlashLight.innerCutOff", glm::cos(glm::radians(12.5f)));
+		noneLightSrcShader.setUniform("FlashLight.outerCutOff", glm::cos(glm::radians(17.5f)));
+		// point lights constant uniforms
+		noneLightSrcShader.setUniform("PointLights[0].position", pointLightsPositions[0]);
+		noneLightSrcShader.setUniform("PointLights[0].ambient", pointLightsColors[0] * 0.1f);
+		noneLightSrcShader.setUniform("PointLights[0].diffuse", pointLightsColors[0]);
+		noneLightSrcShader.setUniform("PointLights[0].specular", pointLightsColors[0]);
+		noneLightSrcShader.setUniform("PointLights[0].constant", 1.0f);
+		noneLightSrcShader.setUniform("PointLights[0].linear", 0.007f);
+		noneLightSrcShader.setUniform("PointLights[0].quadratic", 0.0002f);
 
-		noneLightSrcShader.setUniform("light.innerCutOff", glm::cos(glm::radians(12.5f)));
-		noneLightSrcShader.setUniform("light.outerCutOff", glm::cos(glm::radians(17.5f)));
+		noneLightSrcShader.setUniform("PointLights[1].position", pointLightsPositions[1]);
+		noneLightSrcShader.setUniform("PointLights[1].ambient", pointLightsColors[1] * 0.1f);
+		noneLightSrcShader.setUniform("PointLights[1].diffuse", pointLightsColors[1]);
+		noneLightSrcShader.setUniform("PointLights[1].specular", pointLightsColors[1]);
+		noneLightSrcShader.setUniform("PointLights[1].constant", 1.0f);
+		noneLightSrcShader.setUniform("PointLights[1].linear", 0.014f);
+		noneLightSrcShader.setUniform("PointLights[1].quadratic", 0.0007f);
 
+		noneLightSrcShader.setUniform("PointLights[2].position", pointLightsPositions[2]);
+		noneLightSrcShader.setUniform("PointLights[2].ambient", pointLightsColors[2] * 0.1f);
+		noneLightSrcShader.setUniform("PointLights[2].diffuse", pointLightsColors[2]);
+		noneLightSrcShader.setUniform("PointLights[2].specular", pointLightsColors[2]);
+		noneLightSrcShader.setUniform("PointLights[2].constant", 1.0f);
+		noneLightSrcShader.setUniform("PointLights[2].linear", 0.022f);
+		noneLightSrcShader.setUniform("PointLights[2].quadratic", 0.0019f);
 
-		noneLightSrcShader.setUniform("light.diffuse", 1.0f, 1.0f, 1.0f);
-		noneLightSrcShader.setUniform("light.ambient", 0.1f, 0.1f, 0.1f);
-		noneLightSrcShader.setUniform("light.specular", 1.0f, 1.0f, 1.0f);
-
-		noneLightSrcShader.setUniform("light.constant", 1.0f);
-		noneLightSrcShader.setUniform("light.linear", 0.045f);
-		noneLightSrcShader.setUniform("light.quadratic", 0.0075f);
-
+		noneLightSrcShader.setUniform("PointLights[3].position", pointLightsPositions[3]);
+		noneLightSrcShader.setUniform("PointLights[3].ambient", pointLightsColors[3] * 0.1f);
+		noneLightSrcShader.setUniform("PointLights[3].diffuse", pointLightsColors[3]);
+		noneLightSrcShader.setUniform("PointLights[3].specular", pointLightsColors[3]);
+		noneLightSrcShader.setUniform("PointLights[3].constant", 1.0f);
+		noneLightSrcShader.setUniform("PointLights[3].linear", 0.027f);
+		noneLightSrcShader.setUniform("PointLights[3].quadratic", 0.0028f);
 
 		while (!glfwWindowShouldClose(window)) {
 
@@ -303,22 +343,31 @@ int main(void) {
 
 			projectionMat = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
-			//lightSrcShader.use();
-			//lightSrcShader.setUniform("ModelMat", lightModelMat);
-			//lightSrcShader.setUniform("ViewMat", viewMat);
-			//lightSrcShader.setUniform("ProjectionMat", projectionMat);
-			//
-			//glBindVertexArray(lightSrcVaoId);
-			//
-			//glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0);
+			lightSrcShader.use();
+			lightSrcShader.setUniform("ViewMat", viewMat);
+			lightSrcShader.setUniform("ProjectionMat", projectionMat);
+
+			GLCall(glBindVertexArray(lightSrcVaoId));
+
+			for (int i = 0; i < 4; i++) {
+				glm::mat4 lightModelMat(1.0f);
+				lightModelMat = glm::translate(lightModelMat, pointLightsPositions[i]);
+				lightModelMat = glm::scale(lightModelMat, glm::vec3(0.2f));
+				lightSrcShader.setUniform("ModelMat", lightModelMat);
+
+				lightSrcShader.setUniform("LightColor", pointLightsColors[i]);
+
+				GLCall(glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0));
+			}
+
 
 			noneLightSrcShader.use();
 			noneLightSrcShader.setUniform("ViewMat", viewMat);
 			noneLightSrcShader.setUniform("ProjectionMat", projectionMat);
 			noneLightSrcShader.setUniform("ViewPos", camera.getPosition());
 
-			noneLightSrcShader.setUniform("light.position", camera.getPosition());
-			noneLightSrcShader.setUniform("light.direction", camera.getFront());
+			noneLightSrcShader.setUniform("FlashLight.pointLightProp.position", camera.getPosition());
+			noneLightSrcShader.setUniform("FlashLight.direction", camera.getFront());
 
 			GLCall(glBindVertexArray(containerVaoId));
 
