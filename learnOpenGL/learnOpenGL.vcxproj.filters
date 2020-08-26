@@ -27,6 +27,12 @@
     <ClCompile Include="src\Camera.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="src\Mesh.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Model.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\fshaders\vertexShader.glsl" />
@@ -34,6 +40,8 @@
     <None Include="res\shaders\lightSrc.frag" />
     <None Include="res\shaders\lightSrc.vert" />
     <None Include="res\shaders\noneLightSrc.vert" />
+    <None Include="res\shaders\modelShader.vert" />
+    <None Include="res\shaders\modelShader.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\headers\Shader.h">
@@ -43,6 +51,12 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="src\headers\OpenGLErrorHandling.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="src\headers\Mesh.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="src\headers\Model.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

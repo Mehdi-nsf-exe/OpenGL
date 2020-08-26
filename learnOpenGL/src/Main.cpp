@@ -7,11 +7,11 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
-#define	STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 
 #include "Shader.h"
 #include "Camera.h"
+#include "Mesh.h"
+#include "Model.h"
 
 #include "OpenGLErrorHandling.h"
 
@@ -23,35 +23,15 @@
 
 static const char* WINDOW_TITLE = "learnOpenGL";
 
-static const char* OBJECT_VERTEX_SHADER_PATH = "res/shaders/noneLightSrc.vert";
-static const char* OBJECT_FRAGMENT_SHADER_PATH = "res/shaders/noneLightSrc.frag";
-static const char* LIGHT_VERTEX_SHADER_PATH = "res/shaders/lightSrc.vert";
-static const char* LIGHT_FRAGMENT_SHADER_PATH = "res/shaders/lightSrc.frag";
+static const char* OBJECT_VERTEX_SHADER_PATH = "res/shaders/modelShader.vert";
+static const char* OBJECT_FRAGMENT_SHADER_PATH = "res/shaders/modelShader.frag";
 
-static const char* CONTAINER_IMAGE_PATH = "res/textures/container2.png";
-static const char* CONTAINER_SPEC_PATH = "res/textures/container2_specular.png";
+static const char* MODEL_PATH = "res/models/backpack/backpack.obj";
 
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 static float deltaTime = 0.0f;
 static float lastFrame = 0.0f;
-
-/**
-	Exception that indicates an error occured in texture loading.
- */
-class TextureLoadingFailure : public std::exception {
-public:
-	explicit TextureLoadingFailure() {}
-};
-
-/**
-	Loads the texture from the indicated path.
-
-	@param path The path of the texture image.
-
-	@returns The Id of the texture.
- */
-unsigned int loadTexture(const char* path);
 
 /**
 	The callback for the glfw window resizing event.
@@ -81,96 +61,6 @@ void updateDeltaTime();
 
 int main(void) {
 
-	float containerVertices[] = {
-		// positions          // normals           // texture coords
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-	};
-
-	glm::vec3 containerPositions[] = {
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
-		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
-	};
-
-	float lightSrcVertices[] = {
-		-0.5f, -0.5f, -0.5f,
-		 0.5f, -0.5f, -0.5f,
-		 0.5f,  0.5f, -0.5f,
-		-0.5f,  0.5f, -0.5f,
-
-		-0.5f, -0.5f,  0.5f,
-		 0.5f, -0.5f,  0.5f,
-		 0.5f,  0.5f,  0.5f,
-		-0.5f,  0.5f,  0.5f,
-	};
-
-	unsigned int lightSrcIndices[] = {
-		0, 1, 2,
-		2, 3, 0,
-
-		1, 5, 6,
-		6, 2, 1,
-
-		5, 4, 7,
-		7, 6, 5,
-
-		4, 0, 3,
-		3, 7, 4,
-
-		3, 2, 6,
-		6, 7, 3,
-
-		1, 0, 4,
-		4, 5, 1
-	};
-
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MAJOR_OPENGL_VERSION);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, MINOR_OPENGL_VERSION);
@@ -190,6 +80,7 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
+
 	GLCall(glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
@@ -201,134 +92,18 @@ int main(void) {
 	GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 	GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
-	GLuint containerVaoId;
-	GLCall(glGenVertexArrays(1, &containerVaoId));
-	GLCall(glBindVertexArray(containerVaoId));
-
-	GLuint containerVboId;
-	GLCall(glGenBuffers(1, &containerVboId));
-	GLCall(glBindBuffer(GL_ARRAY_BUFFER, containerVboId));
-	GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(containerVertices), containerVertices, GL_STATIC_DRAW));
-
-	GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0));
-	GLCall(glEnableVertexAttribArray(0));
-
-	GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))));
-	GLCall(glEnableVertexAttribArray(1));
-
-	GLCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))));
-	GLCall(glEnableVertexAttribArray(2));
-
-	GLCall(glBindVertexArray(0));
-
-	unsigned int lightSrcVaoId;
-	GLCall(glGenVertexArrays(1, &lightSrcVaoId));
-	GLCall(glBindVertexArray(lightSrcVaoId));
-
-	unsigned int lightSrcVboId;
-	GLCall(glGenBuffers(1, &lightSrcVboId));
-	GLCall(glBindBuffer(GL_ARRAY_BUFFER, lightSrcVboId));
-	GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(lightSrcVertices), &lightSrcVertices, GL_STATIC_DRAW));
-
-	GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0));
-	GLCall(glEnableVertexAttribArray(0));
-
-	unsigned int lightSrcEboId;
-	GLCall(glGenBuffers(1, &lightSrcEboId));
-	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightSrcEboId));
-	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(lightSrcIndices), &lightSrcIndices, GL_STATIC_DRAW));
-
-	GLCall(glBindVertexArray(0));
-
-	glm::vec3 pointLightsPositions[] = {
-		glm::vec3(-4.0f,  2.0f, -12.0f),
-		glm::vec3( 2.3f, -3.3f, -4.0f),
-		glm::vec3( 0.0f,  0.0f,  3.0f),
-		glm::vec3( 0.7f,  0.2f,  2.0f)
-	};
-
-	glm::vec3 pointLightsColors[] = {
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		glm::vec3(1.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f),
-		glm::vec3(0.0f, 0.0f, 1.0f)
-	};
-
 	glm::mat4 viewMat;
 	glm::mat4 projectionMat;
 
-	glm::mat4 objectModelMat(1.0f);
-	glm::mat3 objectNormalMat = glm::mat3(objectModelMat);
-	objectNormalMat = glm::transpose(glm::inverse(objectNormalMat));
-
-	unsigned int diffuseMapId;
-	unsigned int specularMapId;
+	glm::mat4 modelMat(1.0f);
 	
 	int mainReturnValue = EXIT_SUCCESS;
 
 	try {
 
-		diffuseMapId = loadTexture(CONTAINER_IMAGE_PATH);
-		specularMapId = loadTexture(CONTAINER_SPEC_PATH);
+		Model model(MODEL_PATH);
 
-		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
-
-		Shader noneLightSrcShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
-		noneLightSrcShader.use();
-		// Material constant uniforms
-		noneLightSrcShader.setUniform("material.diffuse", 0);
-		GLCall(glActiveTexture(GL_TEXTURE0));
-		GLCall(glBindTexture(GL_TEXTURE_2D, diffuseMapId));
-		noneLightSrcShader.setUniform("material.specular", 1);
-		GLCall(glActiveTexture(GL_TEXTURE1));
-		GLCall(glBindTexture(GL_TEXTURE_2D, specularMapId));
-		noneLightSrcShader.setUniform("material.shininess", 32.0f);
-		// Directional light constant uniforms
-		noneLightSrcShader.setUniform("DirLight.direction", 0.2f, -1.0f, 0.3f);
-		noneLightSrcShader.setUniform("DirLight.ambient", 0.1f, 0.1f, 0.0f);
-		noneLightSrcShader.setUniform("DirLight.diffuse", 0.75f, 0.75f, 0.0f);
-		noneLightSrcShader.setUniform("DirLight.specular", 0.75f, 0.75f, 0.0f);
-		// Flash light constant uniforms
-		noneLightSrcShader.setUniform("FlashLight.pointLightProp.diffuse", 0.8f, 1.0f, 0.2f);
-		noneLightSrcShader.setUniform("FlashLight.pointLightProp.ambient", 0.08f, 0.1f, 0.02f);
-		noneLightSrcShader.setUniform("FlashLight.pointLightProp.specular", 0.8f, 1.0f, 0.2f);
-		noneLightSrcShader.setUniform("FlashLight.pointLightProp.constant", 1.0f);
-		noneLightSrcShader.setUniform("FlashLight.pointLightProp.linear", 0.14f);
-		noneLightSrcShader.setUniform("FlashLight.pointLightProp.quadratic", 0.07f);
-		noneLightSrcShader.setUniform("FlashLight.innerCutOff", glm::cos(glm::radians(12.5f)));
-		noneLightSrcShader.setUniform("FlashLight.outerCutOff", glm::cos(glm::radians(17.5f)));
-		// point lights constant uniforms
-		noneLightSrcShader.setUniform("PointLights[0].position", pointLightsPositions[0]);
-		noneLightSrcShader.setUniform("PointLights[0].ambient", pointLightsColors[0] * 0.1f);
-		noneLightSrcShader.setUniform("PointLights[0].diffuse", pointLightsColors[0]);
-		noneLightSrcShader.setUniform("PointLights[0].specular", pointLightsColors[0]);
-		noneLightSrcShader.setUniform("PointLights[0].constant", 1.0f);
-		noneLightSrcShader.setUniform("PointLights[0].linear", 0.007f);
-		noneLightSrcShader.setUniform("PointLights[0].quadratic", 0.0002f);
-
-		noneLightSrcShader.setUniform("PointLights[1].position", pointLightsPositions[1]);
-		noneLightSrcShader.setUniform("PointLights[1].ambient", pointLightsColors[1] * 0.1f);
-		noneLightSrcShader.setUniform("PointLights[1].diffuse", pointLightsColors[1]);
-		noneLightSrcShader.setUniform("PointLights[1].specular", pointLightsColors[1]);
-		noneLightSrcShader.setUniform("PointLights[1].constant", 1.0f);
-		noneLightSrcShader.setUniform("PointLights[1].linear", 0.014f);
-		noneLightSrcShader.setUniform("PointLights[1].quadratic", 0.0007f);
-
-		noneLightSrcShader.setUniform("PointLights[2].position", pointLightsPositions[2]);
-		noneLightSrcShader.setUniform("PointLights[2].ambient", pointLightsColors[2] * 0.1f);
-		noneLightSrcShader.setUniform("PointLights[2].diffuse", pointLightsColors[2]);
-		noneLightSrcShader.setUniform("PointLights[2].specular", pointLightsColors[2]);
-		noneLightSrcShader.setUniform("PointLights[2].constant", 1.0f);
-		noneLightSrcShader.setUniform("PointLights[2].linear", 0.022f);
-		noneLightSrcShader.setUniform("PointLights[2].quadratic", 0.0019f);
-
-		noneLightSrcShader.setUniform("PointLights[3].position", pointLightsPositions[3]);
-		noneLightSrcShader.setUniform("PointLights[3].ambient", pointLightsColors[3] * 0.1f);
-		noneLightSrcShader.setUniform("PointLights[3].diffuse", pointLightsColors[3]);
-		noneLightSrcShader.setUniform("PointLights[3].specular", pointLightsColors[3]);
-		noneLightSrcShader.setUniform("PointLights[3].constant", 1.0f);
-		noneLightSrcShader.setUniform("PointLights[3].linear", 0.027f);
-		noneLightSrcShader.setUniform("PointLights[3].quadratic", 0.0028f);
+		Shader shader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
 
 		while (!glfwWindowShouldClose(window)) {
 
@@ -343,44 +118,13 @@ int main(void) {
 
 			projectionMat = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
-			lightSrcShader.use();
-			lightSrcShader.setUniform("ViewMat", viewMat);
-			lightSrcShader.setUniform("ProjectionMat", projectionMat);
 
-			GLCall(glBindVertexArray(lightSrcVaoId));
+			shader.use();
+			shader.setUniform("ModelMat", modelMat);
+			shader.setUniform("ViewMat", viewMat);
+			shader.setUniform("ProjectionMat", projectionMat);
 
-			for (int i = 0; i < 4; i++) {
-				glm::mat4 lightModelMat(1.0f);
-				lightModelMat = glm::translate(lightModelMat, pointLightsPositions[i]);
-				lightModelMat = glm::scale(lightModelMat, glm::vec3(0.2f));
-				lightSrcShader.setUniform("ModelMat", lightModelMat);
-
-				lightSrcShader.setUniform("LightColor", pointLightsColors[i]);
-
-				GLCall(glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0));
-			}
-
-
-			noneLightSrcShader.use();
-			noneLightSrcShader.setUniform("ViewMat", viewMat);
-			noneLightSrcShader.setUniform("ProjectionMat", projectionMat);
-			noneLightSrcShader.setUniform("ViewPos", camera.getPosition());
-
-			noneLightSrcShader.setUniform("FlashLight.pointLightProp.position", camera.getPosition());
-			noneLightSrcShader.setUniform("FlashLight.direction", camera.getFront());
-
-			GLCall(glBindVertexArray(containerVaoId));
-
-			for (int i = 0; i < 10; i++) {
-				objectModelMat = glm::mat4(1.0f);
-				objectModelMat = glm::translate(objectModelMat, containerPositions[i]);
-				float angle = 20.0f * i;
-				objectModelMat = glm::rotate(objectModelMat, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-				noneLightSrcShader.setUniform("ModelMat", objectModelMat);
-				GLCall(glDrawArrays(GL_TRIANGLES, 0, 36));
-			}
-
-			GLCall(glBindVertexArray(0));
+			model.draw(shader);
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();
@@ -398,7 +142,7 @@ int main(void) {
 		std::cout << "SHADER PROGRAM LINK ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
 		mainReturnValue = EXIT_FAILURE;
 	}
-	catch (const TextureLoadingFailure & e) {
+	catch (const Texture::TextureLoadingFailure & e) {
 		std::cout << "TEXTURE LOADING FAILURE\n";
 		mainReturnValue = EXIT_FAILURE;
 	}
@@ -407,61 +151,8 @@ int main(void) {
 		mainReturnValue = EXIT_FAILURE;
 	}
 
-	GLCall(glDeleteVertexArrays(1, &containerVaoId));
-	GLCall(glDeleteBuffers(1, &containerVboId));
-	GLCall(glDeleteTextures(1, &diffuseMapId));
-	GLCall(glDeleteTextures(1, &specularMapId));
-	
-	GLCall(glDeleteVertexArrays(1, &lightSrcVaoId));
-	GLCall(glDeleteBuffers(1, &lightSrcVboId));
-	GLCall(glDeleteBuffers(1, &lightSrcEboId));
-
 	glfwTerminate();
 	return mainReturnValue;
-}
-
-unsigned int loadTexture(const char* path) {
-
-	int width, height, nrComponents;
-	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
-	if (data == nullptr) {
-		throw TextureLoadingFailure();
-	}
-
-	GLenum format;
-	switch (nrComponents) {
-		case 1: {
-			format = GL_RED;
-			break;
-		} 
-		case 3: {
-			format = GL_RGB;
-			break;
-		}
-		case 4: {
-			format = GL_RGBA;
-			break;
-		}
-		default: {
-			ASSERT(false);
-		}
-	}
-
-	unsigned int textureId;
-	GLCall(glGenTextures(1, &textureId));
-	GLCall(glBindTexture(GL_TEXTURE_2D, textureId));
-	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data));
-	GLCall(glGenerateMipmap(GL_TEXTURE_2D));
-
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
-	stbi_image_free(data);
-	data = nullptr;
-
-	return textureId;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {

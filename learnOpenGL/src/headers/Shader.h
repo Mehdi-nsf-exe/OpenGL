@@ -119,6 +119,9 @@ public:
 	void setUniform(const std::string& name, const glm::mat3& matrix) const;
 	void setUniform(const std::string& name, const glm::vec3& vector) const;
 	void setUniform(const std::string& name, float x, float y, float z) const;
+	inline void setUniform(const std::string& name, unsigned int value) const {
+		setUniform(name, (int)value);
+	}
 
 	/**
 		Reads the shader program source code form the indicated files.
