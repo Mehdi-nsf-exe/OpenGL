@@ -141,4 +141,8 @@ void Shader::setUniform(const std::string& name, float x, float y, float z) cons
 	GLCall(glUniform3f(location, x, y, z));
 }
 
+void Shader::setUniform(const std::string& name, float x, float y, float z, float w) const {
+	int location = getUniformLocation(name);
+	GLCall(glUniform4f(location, x, y, z, w));
+}
 

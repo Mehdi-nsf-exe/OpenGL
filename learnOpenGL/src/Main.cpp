@@ -27,6 +27,9 @@ static const char* OBJECT_VERTEX_SHADER_PATH = "res/shaders/noneLightSrc.vert";
 static const char* OBJECT_FRAGMENT_SHADER_PATH = "res/shaders/noneLightSrc.frag";
 static const char* LIGHT_VERTEX_SHADER_PATH = "res/shaders/lightSrc.vert";
 static const char* LIGHT_FRAGMENT_SHADER_PATH = "res/shaders/lightSrc.frag";
+static const char* OUTLINING_VERT_SHADER_PATH = "res/shaders/outliningShader.vert";
+static const char* OUTLINING_FRAG_SHADER_PATH = "res/shaders/outliningShader.frag";
+
 
 static const char* CONTAINER_IMAGE_PATH = "res/textures/container2.png";
 static const char* CONTAINER_SPEC_PATH = "res/textures/container2_specular.png";
@@ -171,6 +174,19 @@ int main(void) {
 		4, 5, 1
 	};
 
+	float groundPlaneVertices[] = {
+		// Positions			// normals			// Texture coords
+		-0.5f,  0.0f, -0.5f,	0.0f,  1.0f, 0.0f,	0.0f,  0.0f,
+		 0.5f,  0.0f, -0.5f,	0.0f,  1.0f, 0.0f,	20.0f, 0.0f,
+		 0.5f,  0.0f,  0.5f,	0.0f,  1.0f, 0.0f,	20.0f, 20.0f,
+		-0.5f,  0.0f,  0.5f,	0.0f,  1.0f, 0.0f,	0.0f,  20.0f
+	};
+
+	int groundPlaneIndices[] = {
+		0, 1, 2,
+		2, 3, 0
+	};
+
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MAJOR_OPENGL_VERSION);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, MINOR_OPENGL_VERSION);
@@ -198,8 +214,9 @@ int main(void) {
 	glfwSetScrollCallback(window, scrollCallback);
 
 	GLCall(glEnable(GL_DEPTH_TEST));
+	GLCall(glEnable(GL_STENCIL_TEST));
 	GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-	GLCall(glClear(GL_COLOR_BUFFER_BIT));
+	GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
 	GLuint containerVaoId;
 	GLCall(glGenVertexArrays(1, &containerVaoId));
@@ -240,6 +257,31 @@ int main(void) {
 
 	GLCall(glBindVertexArray(0));
 
+	unsigned int groundPlaneVaoId;
+	GLCall(glGenVertexArrays(1, &groundPlaneVaoId));
+	GLCall(glBindVertexArray(groundPlaneVaoId));
+
+	unsigned int groundPlaneVboId;
+	GLCall(glGenBuffers(1, &groundPlaneVboId));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, groundPlaneVboId));
+	GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(groundPlaneVertices), &groundPlaneVertices, GL_STATIC_DRAW));
+
+	GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0));
+	GLCall(glEnableVertexAttribArray(0));
+	
+	GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))));
+	GLCall(glEnableVertexAttribArray(1));
+	
+	GLCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))));
+	GLCall(glEnableVertexAttribArray(2));
+
+	unsigned int groundPlaneEboId;
+	GLCall(glGenBuffers(1, &groundPlaneEboId));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundPlaneEboId));
+	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(groundPlaneIndices), &groundPlaneIndices, GL_STATIC_DRAW));
+
+	GLCall(glBindVertexArray(0));
+
 	glm::vec3 pointLightsPositions[] = {
 		glm::vec3(-4.0f,  2.0f, -12.0f),
 		glm::vec3( 2.3f, -3.3f, -4.0f),
@@ -257,9 +299,14 @@ int main(void) {
 	glm::mat4 viewMat;
 	glm::mat4 projectionMat;
 
+	glm::mat4 groundPlaneModelMat(1.0f);
+	groundPlaneModelMat = glm::translate(groundPlaneModelMat, glm::vec3(0.0f, -4.0f, -7.0f));
+	groundPlaneModelMat = glm::scale(groundPlaneModelMat, glm::vec3(40.0f, 1.0f, 40.0f));
+
+	glm::mat3 groundPlaneNormalMat = glm::mat3(groundPlaneModelMat);
+	groundPlaneNormalMat = glm::transpose(glm::inverse(groundPlaneNormalMat));
+
 	glm::mat4 objectModelMat(1.0f);
-	glm::mat3 objectNormalMat = glm::mat3(objectModelMat);
-	objectNormalMat = glm::transpose(glm::inverse(objectNormalMat));
 
 	unsigned int diffuseMapId;
 	unsigned int specularMapId;
@@ -273,6 +320,10 @@ int main(void) {
 
 		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
 
+		Shader outliningShader(OUTLINING_VERT_SHADER_PATH, OUTLINING_FRAG_SHADER_PATH);
+		outliningShader.use();
+		outliningShader.setUniform("OutliningColor", 1.0f, 1.0f, 0.0f, 1.0f);
+
 		Shader noneLightSrcShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
 		noneLightSrcShader.use();
 		// Material constant uniforms
@@ -284,10 +335,10 @@ int main(void) {
 		GLCall(glBindTexture(GL_TEXTURE_2D, specularMapId));
 		noneLightSrcShader.setUniform("material.shininess", 32.0f);
 		// Directional light constant uniforms
-		noneLightSrcShader.setUniform("DirLight.direction", 0.2f, -1.0f, 0.3f);
-		noneLightSrcShader.setUniform("DirLight.ambient", 0.1f, 0.1f, 0.0f);
-		noneLightSrcShader.setUniform("DirLight.diffuse", 0.75f, 0.75f, 0.0f);
-		noneLightSrcShader.setUniform("DirLight.specular", 0.75f, 0.75f, 0.0f);
+		noneLightSrcShader.setUniform("DirLight.direction", 0.0f, -1.0f, 0.0f);
+		noneLightSrcShader.setUniform("DirLight.ambient", 0.02f, 0.03f, 0.03f);
+		noneLightSrcShader.setUniform("DirLight.diffuse", 0.2f, 0.3f, 0.3f);
+		noneLightSrcShader.setUniform("DirLight.specular", 0.2f, 0.3f, 0.3f);
 		// Flash light constant uniforms
 		noneLightSrcShader.setUniform("FlashLight.pointLightProp.diffuse", 0.8f, 1.0f, 0.2f);
 		noneLightSrcShader.setUniform("FlashLight.pointLightProp.ambient", 0.08f, 0.1f, 0.02f);
@@ -335,7 +386,7 @@ int main(void) {
 			updateDeltaTime();
 			processInput(window);
 
-			GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+			GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
 			float currentTime = (float)glfwGetTime();
 
@@ -360,7 +411,6 @@ int main(void) {
 				GLCall(glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0));
 			}
 
-
 			noneLightSrcShader.use();
 			noneLightSrcShader.setUniform("ViewMat", viewMat);
 			noneLightSrcShader.setUniform("ProjectionMat", projectionMat);
@@ -369,16 +419,55 @@ int main(void) {
 			noneLightSrcShader.setUniform("FlashLight.pointLightProp.position", camera.getPosition());
 			noneLightSrcShader.setUniform("FlashLight.direction", camera.getFront());
 
+			GLCall(glStencilMask(0x00));
+
+			GLCall(glBindVertexArray(groundPlaneVaoId));
+
+			noneLightSrcShader.setUniform("ModelMat", groundPlaneModelMat);
+			noneLightSrcShader.setUniform("NormalMat", groundPlaneNormalMat);
+			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+
 			GLCall(glBindVertexArray(containerVaoId));
+
+			GLCall(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+			GLCall(glStencilMask(0xFF));
+			GLCall(glStencilFunc(GL_ALWAYS, 1, 0xFF));
 
 			for (int i = 0; i < 10; i++) {
 				objectModelMat = glm::mat4(1.0f);
 				objectModelMat = glm::translate(objectModelMat, containerPositions[i]);
 				float angle = 20.0f * i;
 				objectModelMat = glm::rotate(objectModelMat, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+
+
+				glm::mat3 objectNormalMat = glm::mat3(objectModelMat);
+				objectNormalMat = glm::transpose(glm::inverse(objectNormalMat));
+
 				noneLightSrcShader.setUniform("ModelMat", objectModelMat);
+				noneLightSrcShader.setUniform("NormalMat", objectNormalMat);
 				GLCall(glDrawArrays(GL_TRIANGLES, 0, 36));
 			}
+
+			GLCall(glStencilFunc(GL_NOTEQUAL, 1, 0xFF));
+			GLCall(glStencilMask(0x00));
+
+			outliningShader.use();
+			outliningShader.setUniform("ViewMat", viewMat);
+			outliningShader.setUniform("ProjectionMat", projectionMat);
+
+			for (int i = 0; i < 10; i++) {
+				objectModelMat = glm::mat4(1.0f);
+				objectModelMat = glm::translate(objectModelMat, containerPositions[i]);
+				objectModelMat = glm::scale(objectModelMat, glm::vec3(1.05f, 1.05f, 1.05f));
+				float angle = 20.0f * i;
+				objectModelMat = glm::rotate(objectModelMat, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+
+				outliningShader.setUniform("ModelMat", objectModelMat);
+				GLCall(glDrawArrays(GL_TRIANGLES, 0, 36));
+			}
+
+			GLCall(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
+			GLCall(glStencilMask(0xFF));
 
 			GLCall(glBindVertexArray(0));
 
@@ -415,6 +504,10 @@ int main(void) {
 	GLCall(glDeleteVertexArrays(1, &lightSrcVaoId));
 	GLCall(glDeleteBuffers(1, &lightSrcVboId));
 	GLCall(glDeleteBuffers(1, &lightSrcEboId));
+
+	GLCall(glDeleteVertexArrays(1, &groundPlaneVaoId));
+	GLCall(glDeleteBuffers(1, &groundPlaneVboId));
+	GLCall(glDeleteBuffers(1, &groundPlaneEboId));
 
 	glfwTerminate();
 	return mainReturnValue;
