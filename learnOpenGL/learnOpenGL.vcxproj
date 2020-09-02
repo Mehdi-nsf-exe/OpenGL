@@ -178,8 +178,11 @@
     <None Include="res\shaders\outliningShader.vert" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\textures\blackTexture.png" />
     <Image Include="res\textures\container2.png" />
     <Image Include="res\textures\container2_specular.png" />
+    <Image Include="res\textures\grass.png" />
+    <Image Include="res\textures\transparentWindow.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

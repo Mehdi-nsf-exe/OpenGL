@@ -33,6 +33,8 @@ static const char* OUTLINING_FRAG_SHADER_PATH = "res/shaders/outliningShader.fra
 
 static const char* CONTAINER_IMAGE_PATH = "res/textures/container2.png";
 static const char* CONTAINER_SPEC_PATH = "res/textures/container2_specular.png";
+static const char* GRASS_TEXTURE_PATH = "res/textures/grass.png";
+static const char* BLACK_TEXTURE_PATH = "res/textures/blackTexture.png";
 
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -187,6 +189,34 @@ int main(void) {
 		2, 3, 0
 	};
 
+	float grassVertices[] = {
+		-0.5f,  0.0f,  0.0f,		0.0f, 0.0f, -1.0f,	0.0f, 0.0f,
+		 0.5f,  0.0f,  0.0f,		0.0f, 0.0f, -1.0f,	1.0f, 0.0f,
+		 0.5f,  1.0f,  0.0f,		0.0f, 0.0f, -1.0f,	1.0f, 1.0f,
+		-0.5f,  1.0f,  0.0f,		0.0f, 0.0f, -1.0f,	0.0f, 1.0f
+
+		-0.5f,  0.0f,  0.0f,		0.0f, 0.0f,  1.0f,	0.0f, 0.0f,
+		 0.5f,  0.0f,  0.0f,		0.0f, 0.0f,  1.0f,	1.0f, 0.0f,
+		 0.5f,  1.0f,  0.0f,		0.0f, 0.0f,  1.0f,	1.0f, 1.0f,
+		-0.5f,  1.0f,  0.0f,		0.0f, 0.0f,  1.0f,	0.0f, 1.0f
+	};
+
+	int grassIndices[] {
+		0, 1, 2,
+		2, 3, 0,
+
+		5, 4, 7,
+		7, 6, 5
+	};
+
+	glm::vec3 grassPositions[]{
+		glm::vec3(-1.5f, -4.0f, -7.48f),
+		glm::vec3( 1.5f, -4.0f, -6.49f),
+		glm::vec3( 0.0f, -4.0f, -6.3f),
+		glm::vec3(-0.3f, -4.0f, -9.3f),
+		glm::vec3( 0.5f, -4.0f, -7.6f)
+	};
+
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, MAJOR_OPENGL_VERSION);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, MINOR_OPENGL_VERSION);
@@ -205,6 +235,8 @@ int main(void) {
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
+
+	stbi_set_flip_vertically_on_load(true);
 
 	GLCall(glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
@@ -282,6 +314,31 @@ int main(void) {
 
 	GLCall(glBindVertexArray(0));
 
+	unsigned int grassVaoId;
+	GLCall(glGenVertexArrays(1, &grassVaoId));
+	GLCall(glBindVertexArray(grassVaoId));
+
+	unsigned int grassVboId;
+	GLCall(glGenBuffers(1, &grassVboId));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, grassVboId));
+	GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(grassVertices), &grassVertices, GL_STATIC_DRAW));
+
+	GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0));
+	GLCall(glEnableVertexAttribArray(0));
+
+	GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))));
+	GLCall(glEnableVertexAttribArray(1));
+
+	GLCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))));
+	GLCall(glEnableVertexAttribArray(2));
+
+	unsigned int grassEboId;
+	GLCall(glGenBuffers(1, &grassEboId));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, grassEboId));
+	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(grassIndices), &grassIndices, GL_STATIC_DRAW));
+
+	GLCall(glBindVertexArray(0));
+
 	glm::vec3 pointLightsPositions[] = {
 		glm::vec3(-4.0f,  2.0f, -12.0f),
 		glm::vec3( 2.3f, -3.3f, -4.0f),
@@ -310,13 +367,32 @@ int main(void) {
 
 	unsigned int diffuseMapId;
 	unsigned int specularMapId;
+	unsigned int grassTextureId;
+	unsigned int blackTextureId;
 	
 	int mainReturnValue = EXIT_SUCCESS;
 
 	try {
 
+		GLCall(glActiveTexture(GL_TEXTURE0));
 		diffuseMapId = loadTexture(CONTAINER_IMAGE_PATH);
+		GLCall(glBindTexture(GL_TEXTURE_2D, diffuseMapId));
+		int containerDiffSampler = 0;
+
+		GLCall(glActiveTexture(GL_TEXTURE1));
 		specularMapId = loadTexture(CONTAINER_SPEC_PATH);
+		GLCall(glBindTexture(GL_TEXTURE_2D, specularMapId));
+		int containerSpecSampler = 1;
+
+		GLCall(glActiveTexture(GL_TEXTURE2));
+		grassTextureId = loadTexture(GRASS_TEXTURE_PATH);
+		GLCall(glBindTexture(GL_TEXTURE_2D, grassTextureId));
+		int grassSampler = 2;
+
+		GLCall(glActiveTexture(GL_TEXTURE3));
+		blackTextureId = loadTexture(BLACK_TEXTURE_PATH);
+		GLCall(glBindTexture(GL_TEXTURE_2D, blackTextureId));
+		int blackSampler = 3;
 
 		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
 
@@ -328,12 +404,8 @@ int main(void) {
 		noneLightSrcShader.use();
 		// Material constant uniforms
 		noneLightSrcShader.setUniform("material.diffuse", 0);
-		GLCall(glActiveTexture(GL_TEXTURE0));
-		GLCall(glBindTexture(GL_TEXTURE_2D, diffuseMapId));
 		noneLightSrcShader.setUniform("material.specular", 1);
-		GLCall(glActiveTexture(GL_TEXTURE1));
-		GLCall(glBindTexture(GL_TEXTURE_2D, specularMapId));
-		noneLightSrcShader.setUniform("material.shininess", 32.0f);
+		noneLightSrcShader.setUniform("material.shininess", 64.0f);
 		// Directional light constant uniforms
 		noneLightSrcShader.setUniform("DirLight.direction", 0.0f, -1.0f, 0.0f);
 		noneLightSrcShader.setUniform("DirLight.ambient", 0.02f, 0.03f, 0.03f);
@@ -386,7 +458,9 @@ int main(void) {
 			updateDeltaTime();
 			processInput(window);
 
+			GLCall(glStencilMask(0xFF));
 			GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+			GLCall(glStencilMask(0x00));
 
 			float currentTime = (float)glfwGetTime();
 
@@ -427,11 +501,30 @@ int main(void) {
 			noneLightSrcShader.setUniform("NormalMat", groundPlaneNormalMat);
 			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
+			GLCall(glBindVertexArray(grassVaoId));
+
+			noneLightSrcShader.use();
+			noneLightSrcShader.setUniform("material.diffuse", grassSampler);
+			noneLightSrcShader.setUniform("material.specular", blackSampler);
+			noneLightSrcShader.setUniform("material.shininess", 2.0f);
+			
+			for (int i = 0; i < 5; i++) {
+				glm::mat4 grassModelMat(1.0f);
+				grassModelMat = glm::translate(grassModelMat, grassPositions[i]);
+				noneLightSrcShader.setUniform("ModelMat", grassModelMat);
+				GLCall(glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0));
+			}
+
 			GLCall(glBindVertexArray(containerVaoId));
 
 			GLCall(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
 			GLCall(glStencilMask(0xFF));
 			GLCall(glStencilFunc(GL_ALWAYS, 1, 0xFF));
+
+			noneLightSrcShader.use();
+			noneLightSrcShader.setUniform("material.diffuse", containerDiffSampler);
+			noneLightSrcShader.setUniform("material.specular", containerSpecSampler);
+			noneLightSrcShader.setUniform("material.shininess", 32.0f);
 
 			for (int i = 0; i < 10; i++) {
 				objectModelMat = glm::mat4(1.0f);
@@ -467,7 +560,7 @@ int main(void) {
 			}
 
 			GLCall(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
-			GLCall(glStencilMask(0xFF));
+			GLCall(glStencilMask(0x00));
 
 			GLCall(glBindVertexArray(0));
 
@@ -487,7 +580,7 @@ int main(void) {
 		std::cout << "SHADER PROGRAM LINK ERROR:\n" << Shader::getInfoLogBuffer() << std::endl;
 		mainReturnValue = EXIT_FAILURE;
 	}
-	catch (const TextureLoadingFailure & e) {
+	catch (const TextureLoadingFailure& e) {
 		std::cout << "TEXTURE LOADING FAILURE\n";
 		mainReturnValue = EXIT_FAILURE;
 	}
@@ -498,8 +591,6 @@ int main(void) {
 
 	GLCall(glDeleteVertexArrays(1, &containerVaoId));
 	GLCall(glDeleteBuffers(1, &containerVboId));
-	GLCall(glDeleteTextures(1, &diffuseMapId));
-	GLCall(glDeleteTextures(1, &specularMapId));
 	
 	GLCall(glDeleteVertexArrays(1, &lightSrcVaoId));
 	GLCall(glDeleteBuffers(1, &lightSrcVboId));
@@ -508,6 +599,11 @@ int main(void) {
 	GLCall(glDeleteVertexArrays(1, &groundPlaneVaoId));
 	GLCall(glDeleteBuffers(1, &groundPlaneVboId));
 	GLCall(glDeleteBuffers(1, &groundPlaneEboId));
+
+	GLCall(glDeleteTextures(1, &diffuseMapId));
+	GLCall(glDeleteTextures(1, &specularMapId));
+	GLCall(glDeleteTextures(1, &grassTextureId));
+	GLCall(glDeleteTextures(1, &blackTextureId));
 
 	glfwTerminate();
 	return mainReturnValue;
