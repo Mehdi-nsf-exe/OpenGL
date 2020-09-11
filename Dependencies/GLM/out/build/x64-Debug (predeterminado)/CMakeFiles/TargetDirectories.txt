@@ -1,0 +1,2 @@
+C:/dev/Repos/OpenGL/Dependencies/GLM/out/build/x64-Debug (predeterminado)/CMakeFiles/edit_cache.dir
+C:/dev/Repos/OpenGL/Dependencies/GLM/out/build/x64-Debug (predeterminado)/CMakeFiles/rebuild_cache.dir

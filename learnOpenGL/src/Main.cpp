@@ -12,6 +12,7 @@
 
 #include "Shader.h"
 #include "Camera.h"
+#include "FPSManager.h"
 
 #include "OpenGLErrorHandling.h"
 
@@ -20,6 +21,8 @@
 
 #define WINDOW_WIDTH		800
 #define WINDOW_HEIGHT	600
+
+#define TARGET_FPS 35.0
 
 static const char* WINDOW_TITLE = "learnOpenGL";
 
@@ -453,7 +456,11 @@ int main(void) {
 		noneLightSrcShader.setUniform("PointLights[3].linear", 0.027f);
 		noneLightSrcShader.setUniform("PointLights[3].quadratic", 0.0028f);
 
+		FPSManager fpsManager(TARGET_FPS);
+
 		while (!glfwWindowShouldClose(window)) {
+
+			fpsManager.startNewFrame();
 
 			updateDeltaTime();
 			processInput(window);

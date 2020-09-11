@@ -160,11 +160,13 @@
   <ItemGroup>
     <ClCompile Include="..\Dependencies\GLAD\src\glad.c" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\FPSManager.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\headers\Camera.h" />
+    <ClInclude Include="src\headers\FPSManager.h" />
     <ClInclude Include="src\headers\OpenGLErrorHandling.h" />
     <ClInclude Include="src\headers\Shader.h" />
   </ItemGroup>
