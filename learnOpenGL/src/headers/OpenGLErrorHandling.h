@@ -1,7 +1,8 @@
 #pragma once
 
 #include <iostream>
-#include <glad/glad.h>
+
+#include <GL/glew.h>
 
 #define ASSERT(x) if (!(x)) __debugbreak();
 
