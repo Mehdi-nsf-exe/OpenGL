@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
