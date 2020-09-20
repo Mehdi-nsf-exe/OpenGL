@@ -86,6 +86,10 @@ void main() {
 
 	vec3 viewDir = normalize(ViewPos - FragPos);
 
+	if (dot(viewDir, fragInfo.normal) <= 0) {
+		fragInfo.normal = -fragInfo.normal;
+	}
+
 	// Directional lighting
 	vec3 result = calcDirLight(DirLight, fragInfo, viewDir);
 	// Flash light

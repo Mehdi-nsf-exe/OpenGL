@@ -199,19 +199,11 @@ int main(void) {
 		 0.5f,  0.0f,  0.0f,		0.0f, 0.0f, -1.0f,	1.0f, 0.0f,
 		 0.5f,  1.0f,  0.0f,		0.0f, 0.0f, -1.0f,	1.0f, 1.0f,
 		-0.5f,  1.0f,  0.0f,		0.0f, 0.0f, -1.0f,	0.0f, 1.0f
-
-		-0.5f,  0.0f,  0.0f,		0.0f, 0.0f,  1.0f,	0.0f, 0.0f,
-		 0.5f,  0.0f,  0.0f,		0.0f, 0.0f,  1.0f,	1.0f, 0.0f,
-		 0.5f,  1.0f,  0.0f,		0.0f, 0.0f,  1.0f,	1.0f, 1.0f,
-		-0.5f,  1.0f,  0.0f,		0.0f, 0.0f,  1.0f,	0.0f, 1.0f
 	};
 
 	unsigned int grassIndices[] {
 		0, 1, 2,
 		2, 3, 0,
-
-		5, 4, 7,
-		7, 6, 5
 	};
 
 	glm::vec3 grassPositions[]{
@@ -514,6 +506,7 @@ int main(void) {
 			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
 			GLCall(glBindVertexArray(grassVaoId));
+			GLCall(glDisable(GL_CULL_FACE));
 
 			noneLightSrcShader.use();
 			noneLightSrcShader.setUniform("material.diffuse", grassSampler);
@@ -527,6 +520,7 @@ int main(void) {
 				GLCall(glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0));
 			}
 
+			GLCall(glEnable(GL_CULL_FACE));
 			GLCall(glBindVertexArray(containerVaoId));
 
 			GLCall(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
