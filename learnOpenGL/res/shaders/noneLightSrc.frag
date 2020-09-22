@@ -40,7 +40,7 @@ struct Material {
 
 struct FragmentInfo {
 	vec4 diffuse;
-	vec3 specular;
+	vec4 specular;
 	vec3 position;
 	vec3 normal;
 };
@@ -48,17 +48,17 @@ struct FragmentInfo {
 /**
 	Calculates the Directional light effect on a fragment.
  */
-vec3 calcDirLight(DirectionalLight light, FragmentInfo fragInfo, vec3 viewDir);
+vec4 calcDirLight(DirectionalLight light, FragmentInfo fragInfo, vec3 viewDir);
 
 /**
 	calulates the effect a pointLight has on a fragment.
  */
-vec3 calcPointLight(PointLight light, FragmentInfo fragInfo, vec3 viewDir);
+vec4 calcPointLight(PointLight light, FragmentInfo fragInfo, vec3 viewDir);
 
 /**
 	Calulates the effect a Spot light has on the fragment.
  */
-vec3 calcSpotLight(SpotLight light, FragmentInfo fragInfo, vec3 viewDir);
+vec4 calcSpotLight(SpotLight light, FragmentInfo fragInfo, vec3 viewDir);
 
 in vec3 FragPos;
 in vec3 Normal;
@@ -80,14 +80,14 @@ void main() {
 	if (fragInfo.diffuse.a < 0.01) {
 		discard;
 	}
-	fragInfo.specular = vec3(texture(material.specular, TexCoords));
+	fragInfo.specular = texture(material.specular, TexCoords);
 	fragInfo.position = FragPos;
 	fragInfo.normal = normalize(Normal);
 
 	vec3 viewDir = normalize(ViewPos - FragPos);
 
 	// Directional lighting
-	vec3 result = calcDirLight(DirLight, fragInfo, viewDir);
+	vec4 result = calcDirLight(DirLight, fragInfo, viewDir);
 	// Flash light
 	result += calcSpotLight(FlashLight, fragInfo, viewDir);
 	// point lights
@@ -95,10 +95,10 @@ void main() {
 		 result += calcPointLight(PointLights[i], fragInfo, viewDir);
 	}
 
-	FragColor = vec4(result, fragInfo.diffuse.a);
+	FragColor = result;
 }
 
-vec3 calcDirLight(DirectionalLight light, FragmentInfo fragInfo, vec3 viewDir) {
+vec4 calcDirLight(DirectionalLight light, FragmentInfo fragInfo, vec3 viewDir) {
 
 	vec3 lightDir = normalize(-light.direction);
 	// diffuse
@@ -107,13 +107,13 @@ vec3 calcDirLight(DirectionalLight light, FragmentInfo fragInfo, vec3 viewDir) {
 	vec3 reflectDir = reflect(-lightDir, fragInfo.normal);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 	//combine results
-	vec3 ambient = light.ambient * vec3(fragInfo.diffuse);
-	vec3 diffuse = light.diffuse * diff *  vec3(fragInfo.diffuse);
-	vec3 specular = light.specular * spec * fragInfo.specular;
+	vec4 ambient = vec4(light.ambient, 1.0) * fragInfo.diffuse;
+	vec4 diffuse = vec4(light.diffuse, 1.0) * diff *  fragInfo.diffuse;
+	vec4 specular = vec4(light.specular, 1.0) * spec * fragInfo.specular;
 	return (ambient + diffuse + specular);
 }
 
-vec3 calcPointLight(PointLight light, FragmentInfo fragInfo, vec3 viewDir) {
+vec4 calcPointLight(PointLight light, FragmentInfo fragInfo, vec3 viewDir) {
 	
 	vec3 lightDir = normalize(light.position - fragInfo.position);
 	// diffuse
@@ -122,9 +122,9 @@ vec3 calcPointLight(PointLight light, FragmentInfo fragInfo, vec3 viewDir) {
 	vec3 reflectDir = reflect(-lightDir, fragInfo.normal);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 	// combine results
-	vec3 ambient = light.ambient * vec3(fragInfo.diffuse);
-	vec3 diffuse = light.diffuse * diff * vec3(fragInfo.diffuse);
-	vec3 specular = light.specular * spec * fragInfo.specular;
+	vec4 ambient = vec4(light.ambient, 1.0) * fragInfo.diffuse;
+	vec4 diffuse = vec4(light.diffuse, 1.0) * diff * fragInfo.diffuse;
+	vec4 specular = vec4(light.specular, 1.0) * spec * fragInfo.specular;
 	// attenuation
 	float lightFragDistance = length(light.position - fragInfo.position);
 	float attenuation = 1.0 /
@@ -133,9 +133,9 @@ vec3 calcPointLight(PointLight light, FragmentInfo fragInfo, vec3 viewDir) {
 	return (ambient + diffuse + specular) * attenuation;
 }
 
-vec3 calcSpotLight(SpotLight light, FragmentInfo fragInfo, vec3 viewDir) {
+vec4 calcSpotLight(SpotLight light, FragmentInfo fragInfo, vec3 viewDir) {
 
-	vec3 lightImpact = vec3(0.0);
+	vec4 lightImpact = vec4(0.0);
 	
 	vec3 lightDir = normalize(light.pointLightProp.position - fragInfo.position);
 

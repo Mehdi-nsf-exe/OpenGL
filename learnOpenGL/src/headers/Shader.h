@@ -3,7 +3,7 @@
 #include <string>
 #include <memory>
 
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
