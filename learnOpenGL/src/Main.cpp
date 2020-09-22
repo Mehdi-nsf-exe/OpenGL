@@ -206,6 +206,18 @@ int main(void) {
 		2, 3, 0,
 	};
 
+	float windowVertices[] = {
+		-0.5f, -0.5f,  0.0f,		0.0f, 0.0f, -1.0f,	0.0f, 0.0f,
+		 0.5f, -0.5f,  0.0f,		0.0f, 0.0f, -1.0f,	1.0f, 0.0f,
+		 0.5f,  0.5f,  0.0f,		0.0f, 0.0f, -1.0f,	1.0f, 1.0f,
+		-0.5f,  0.5f,  0.0f,		0.0f, 0.0f, -1.0f,	0.0f, 1.0f,
+	};
+
+	unsigned int windowIndices[] = {
+		0, 1, 2,
+		2, 3, 0,
+	};
+
 	glm::vec3 grassPositions[]{
 		glm::vec3(-1.5f, -4.0f, -7.48f),
 		glm::vec3( 1.5f, -4.0f, -6.49f),
@@ -244,6 +256,7 @@ int main(void) {
 
 	GLCall(glEnable(GL_DEPTH_TEST));
 	GLCall(glEnable(GL_STENCIL_TEST));
+	GLCall(glEnable(GL_BLEND));
 	GLCall(glEnable(GL_CULL_FACE));
 	GLCall(glFrontFace(GL_CW)); // It looks like the winding order is the opposit on my computer!!!????
 
@@ -339,6 +352,32 @@ int main(void) {
 
 	GLCall(glBindVertexArray(0));
 
+	unsigned int windowVaoId;
+	GLCall(glGenVertexArrays(1, &windowVaoId));
+	GLCall(glBindVertexArray(windowVaoId));
+
+	unsigned int windowVboId;
+	GLCall(glGenBuffers(1, &windowVboId));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, windowVboId));
+	GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(windowVertices), &windowVertices, GL_STATIC_DRAW));
+
+	GLCall(glEnableVertexAttribArray(0));
+	GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0));
+
+	GLCall(glEnableVertexAttribArray(1));
+	GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))));
+
+	GLCall(glEnableVertexAttribArray(2));
+	GLCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))));
+
+	unsigned int windowEboId;
+	GLCall(glGenBuffers(1, &windowEboId));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, windowEboId));
+	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(windowIndices), &windowIndices, GL_STATIC_DRAW));
+
+	GLCall(glBindVertexArray(0));
+
+
 	glm::vec3 pointLightsPositions[] = {
 		glm::vec3(-4.0f,  2.0f, -12.0f),
 		glm::vec3( 2.3f, -3.3f, -4.0f),
@@ -351,6 +390,12 @@ int main(void) {
 		glm::vec3(1.0f, 0.0f, 0.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f),
 		glm::vec3(0.0f, 0.0f, 1.0f)
+	};
+
+	glm::vec3 windowsPositions[] = {
+		glm::vec3(0.0f,  0.0f,  6.0f),
+		glm::vec3(-0.0f, -3.5f, -7.0f),
+		glm::vec3(2.0f, -3.5f, -3.0f)
 	};
 
 	glm::mat4 viewMat;
@@ -368,6 +413,7 @@ int main(void) {
 	unsigned int diffuseMapId;
 	unsigned int specularMapId;
 	unsigned int grassTextureId;
+	unsigned int windowTexId;
 	unsigned int blackTextureId;
 	
 	int mainReturnValue = EXIT_SUCCESS;
@@ -390,15 +436,20 @@ int main(void) {
 		int grassSampler = 2;
 
 		GLCall(glActiveTexture(GL_TEXTURE3));
+		windowTexId = loadTexture(TRANSPARENT_WINDOW_TEX);
+		GLCall(glBindTexture(GL_TEXTURE_2D, windowTexId));
+		int windowSampler = 3;
+
+		GLCall(glActiveTexture(GL_TEXTURE4));
 		blackTextureId = loadTexture(BLACK_TEXTURE_PATH);
 		GLCall(glBindTexture(GL_TEXTURE_2D, blackTextureId));
-		int blackSampler = 3;
+		int blackSampler = 4;
 
 		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
 
 		Shader outliningShader(OUTLINING_VERT_SHADER_PATH, OUTLINING_FRAG_SHADER_PATH);
 		outliningShader.use();
-		outliningShader.setUniform("OutliningColor", 1.0f, 1.0f, 0.0f, 1.0f);
+		outliningShader.setUniform("OutliningColor", 1.0f, 1.0f, 0.0f, 0.3f);
 
 		Shader noneLightSrcShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
 		noneLightSrcShader.use();
@@ -453,6 +504,8 @@ int main(void) {
 		noneLightSrcShader.setUniform("PointLights[3].linear", 0.027f);
 		noneLightSrcShader.setUniform("PointLights[3].quadratic", 0.0028f);
 
+		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
 		FPSManager fpsManager(TARGET_FPS);
 
 		while (!glfwWindowShouldClose(window)) {
@@ -503,6 +556,9 @@ int main(void) {
 
 			noneLightSrcShader.setUniform("ModelMat", groundPlaneModelMat);
 			noneLightSrcShader.setUniform("NormalMat", groundPlaneNormalMat);
+			noneLightSrcShader.setUniform("material.diffuse", containerDiffSampler);
+			noneLightSrcShader.setUniform("material.specular", containerSpecSampler);
+
 			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
 			GLCall(glBindVertexArray(grassVaoId));
@@ -567,6 +623,34 @@ int main(void) {
 
 			GLCall(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
 			GLCall(glStencilMask(0x00));
+			GLCall(glStencilFunc(GL_ALWAYS, 0, 0xFF));
+
+			// Short the transparent windows before drawing.
+			std::map<float, glm::vec3> shorted;
+			for (int i = 0; i < 3; i++) {
+				float distance = glm::length(camera.getPosition() - windowsPositions[i]);
+				shorted[distance] = windowsPositions[i];
+			}
+
+			GLCall(glBindVertexArray(windowVaoId));
+			GLCall(glDisable(GL_CULL_FACE));
+			noneLightSrcShader.use();
+			noneLightSrcShader.setUniform("material.diffuse", windowSampler);
+			noneLightSrcShader.setUniform("material.specular", blackSampler);
+
+			for (std::map<float, glm::vec3>::reverse_iterator it = shorted.rbegin(); it != shorted.rend(); ++it) {
+				glm::mat4 windowModelMat(1.0f);
+				windowModelMat = glm::translate(windowModelMat, it->second);
+				glm::mat3 windowNormalMat = glm::mat3(windowModelMat);
+				windowNormalMat = glm::transpose(glm::inverse(windowNormalMat));
+
+				noneLightSrcShader.setUniform("ModelMat", windowModelMat);
+				noneLightSrcShader.setUniform("NormalMat", windowNormalMat);
+
+				GLCall(glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0));
+			}
+
+			GLCall(glEnable(GL_CULL_FACE));
 
 			GLCall(glBindVertexArray(0));
 
