@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <map>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -37,6 +38,7 @@ static const char* OUTLINING_FRAG_SHADER_PATH = "res/shaders/outliningShader.fra
 static const char* CONTAINER_IMAGE_PATH = "res/textures/container2.png";
 static const char* CONTAINER_SPEC_PATH = "res/textures/container2_specular.png";
 static const char* GRASS_TEXTURE_PATH = "res/textures/grass.png";
+static const char* TRANSPARENT_WINDOW_TEX = "res/textures/transparentWindow.png";
 static const char* BLACK_TEXTURE_PATH = "res/textures/blackTexture.png";
 
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -90,48 +92,48 @@ void updateDeltaTime();
 int main(void) {
 
 	float containerVertices[] = {
-		// positions          // normals           // texture coords
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
+		// back face
+		-0.5f, -0.5f, -0.5f,	0.0f,  0.0f, -1.0f,  0.0f, 0.0f, // bottom-left
+		 0.5f, -0.5f, -0.5f,	0.0f,  0.0f, -1.0f,  1.0f, 0.0f, // bottom-right    
+		 0.5f,  0.5f, -0.5f,	0.0f,  0.0f, -1.0f,  1.0f, 1.0f, // top-right              
+		 0.5f,  0.5f, -0.5f,	0.0f,  0.0f, -1.0f,  1.0f, 1.0f, // top-right
+		-0.5f,  0.5f, -0.5f,	0.0f,  0.0f, -1.0f,  0.0f, 1.0f, // top-left
+		-0.5f, -0.5f, -0.5f,	0.0f,  0.0f, -1.0f,  0.0f, 0.0f, // bottom-left                
+		// front face
+		-0.5f, -0.5f,  0.5f,	0.0f,  0.0f, 1.0f,  0.0f, 0.0f, // bottom-left
+		 0.5f,  0.5f,  0.5f,	0.0f,  0.0f, 1.0f,  1.0f, 1.0f, // top-right
+		 0.5f, -0.5f,  0.5f,	0.0f,  0.0f, 1.0f,  1.0f, 0.0f, // bottom-right        
+		 0.5f,  0.5f,  0.5f,	0.0f,  0.0f, 1.0f,  1.0f, 1.0f, // top-right
+		-0.5f, -0.5f,  0.5f,	0.0f,  0.0f, 1.0f,  0.0f, 0.0f, // bottom-left
+		-0.5f,  0.5f,  0.5f,	0.0f,  0.0f, 1.0f,  0.0f, 1.0f, // top-left        
+		// left face
+		-0.5f,  0.5f,  0.5f,	-1.0f, 0.0f, 0.0f,  1.0f, 0.0f, // top-right
+		-0.5f, -0.5f, -0.5f,	-1.0f, 0.0f, 0.0f,  0.0f, 1.0f, // bottom-left
+		-0.5f,  0.5f, -0.5f,	-1.0f, 0.0f, 0.0f,  1.0f, 1.0f, // top-left       
+		-0.5f, -0.5f, -0.5f,	-1.0f, 0.0f, 0.0f,  0.0f, 1.0f, // bottom-left
+		-0.5f,  0.5f,  0.5f,	-1.0f, 0.0f, 0.0f,  1.0f, 0.0f, // top-right
+		-0.5f, -0.5f,  0.5f,	-1.0f, 0.0f, 0.0f,  0.0f, 0.0f, // bottom-right
+		// right face
+		 0.5f,  0.5f,  0.5f,	1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-left
+		 0.5f,  0.5f, -0.5f,	1.0f,  0.0f,  0.0f,  1.0f, 1.0f, // top-right      
+		 0.5f, -0.5f, -0.5f,	1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-right          
+		 0.5f, -0.5f, -0.5f,	1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-right
+		 0.5f, -0.5f,  0.5f,	1.0f,  0.0f,  0.0f,  0.0f, 0.0f, // bottom-left
+		 0.5f,  0.5f,  0.5f,	1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-left
+		// bottom face          
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f, // top-right
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f, // bottom-left
+		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f, // top-left        
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f, // bottom-left
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f, // top-right
+		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f, // bottom-right
+		// top face
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f, // top-left
+		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, // top-right
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f, // bottom-right                 
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f, // bottom-right
+		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f, // bottom-left  
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f  // top-left              
 	};
 
 	glm::vec3 containerPositions[] = {
@@ -187,7 +189,7 @@ int main(void) {
 		-0.5f,  0.0f,  0.5f,	0.0f,  1.0f, 0.0f,	0.0f,  20.0f
 	};
 
-	int groundPlaneIndices[] = {
+	unsigned int groundPlaneIndices[] = {
 		0, 1, 2,
 		2, 3, 0
 	};
@@ -197,19 +199,11 @@ int main(void) {
 		 0.5f,  0.0f,  0.0f,		0.0f, 0.0f, -1.0f,	1.0f, 0.0f,
 		 0.5f,  1.0f,  0.0f,		0.0f, 0.0f, -1.0f,	1.0f, 1.0f,
 		-0.5f,  1.0f,  0.0f,		0.0f, 0.0f, -1.0f,	0.0f, 1.0f
-
-		-0.5f,  0.0f,  0.0f,		0.0f, 0.0f,  1.0f,	0.0f, 0.0f,
-		 0.5f,  0.0f,  0.0f,		0.0f, 0.0f,  1.0f,	1.0f, 0.0f,
-		 0.5f,  1.0f,  0.0f,		0.0f, 0.0f,  1.0f,	1.0f, 1.0f,
-		-0.5f,  1.0f,  0.0f,		0.0f, 0.0f,  1.0f,	0.0f, 1.0f
 	};
 
-	int grassIndices[] {
+	unsigned int grassIndices[] {
 		0, 1, 2,
 		2, 3, 0,
-
-		5, 4, 7,
-		7, 6, 5
 	};
 
 	glm::vec3 grassPositions[]{
@@ -250,6 +244,9 @@ int main(void) {
 
 	GLCall(glEnable(GL_DEPTH_TEST));
 	GLCall(glEnable(GL_STENCIL_TEST));
+	GLCall(glEnable(GL_CULL_FACE));
+	GLCall(glFrontFace(GL_CW)); // It looks like the winding order is the opposit on my computer!!!????
+
 	GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 	GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
@@ -509,6 +506,7 @@ int main(void) {
 			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
 			GLCall(glBindVertexArray(grassVaoId));
+			GLCall(glDisable(GL_CULL_FACE));
 
 			noneLightSrcShader.use();
 			noneLightSrcShader.setUniform("material.diffuse", grassSampler);
@@ -522,6 +520,7 @@ int main(void) {
 				GLCall(glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0));
 			}
 
+			GLCall(glEnable(GL_CULL_FACE));
 			GLCall(glBindVertexArray(containerVaoId));
 
 			GLCall(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
