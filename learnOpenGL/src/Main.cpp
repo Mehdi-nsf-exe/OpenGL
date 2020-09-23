@@ -377,6 +377,37 @@ int main(void) {
 
 	GLCall(glBindVertexArray(0));
 
+	unsigned int fboId;
+	GLCall(glGenFramebuffers(1, &fboId));
+	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, fboId));
+
+	unsigned int fboTextureId;
+	GLCall(glGenTextures(1, &fboTextureId));
+	GLCall(glBindTexture(GL_TEXTURE_2D, fboTextureId));
+	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WINDOW_WIDTH, WINDOW_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
+
+	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboTextureId, 0));
+	
+	unsigned int fboDepthStencilRboId;
+	GLCall(glGenRenderbuffers(1, &fboDepthStencilRboId));
+	GLCall(glBindRenderbuffer(GL_RENDERBUFFER, fboDepthStencilRboId));
+	GLCall(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WINDOW_WIDTH, WINDOW_HEIGHT));
+	GLCall(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+
+	GLCall(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fboDepthStencilRboId));
+
+	{
+		GLenum framebufferStatus;
+		GLCall(framebufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		if (framebufferStatus != GL_FRAMEBUFFER_COMPLETE) {
+			std::cout << "ERROR::FRAMEBUFFER: Framebuffer not complete." << std::endl;
+			return EXIT_FAILURE;
+		}
+	}
+	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
 	glm::vec3 pointLightsPositions[] = {
 		glm::vec3(-4.0f,  2.0f, -12.0f),
@@ -693,7 +724,10 @@ int main(void) {
 	GLCall(glDeleteTextures(1, &diffuseMapId));
 	GLCall(glDeleteTextures(1, &specularMapId));
 	GLCall(glDeleteTextures(1, &grassTextureId));
+	GLCall(glDeleteTextures(1, &windowTexId));
 	GLCall(glDeleteTextures(1, &blackTextureId));
+
+	GLCall(glDeleteFramebuffers(1, &fboId));
 
 	glfwTerminate();
 	return mainReturnValue;
