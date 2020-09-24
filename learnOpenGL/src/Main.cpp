@@ -91,6 +91,19 @@ void updateDeltaTime();
 
 int main(void) {
 
+	float screenQuadVertices[] = {
+		// Positions	// TexCoords
+		-1.0f, -1.0f,	0.0f, 0.0f,
+		 1.0f, -1.0f,	1.0f, 0.0f,
+		 1.0f,  1.0f,	1.0f, 1.0f,
+		-1.0f,  1.0f,	0.0f, 1.0f
+	};
+
+	unsigned int screenQuadIndices[] = {
+		0, 1, 2,
+		2, 3, 0
+	};
+
 	float containerVertices[] = {
 		// back face
 		-0.5f, -0.5f, -0.5f,	0.0f,  0.0f, -1.0f,  0.0f, 0.0f, // bottom-left
@@ -263,6 +276,28 @@ int main(void) {
 	GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 	GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
+	unsigned int screenQuadVaoId;
+	GLCall(glGenVertexArrays(1, &screenQuadVaoId));
+	GLCall(glBindVertexArray(screenQuadVaoId));
+	
+	unsigned int screenQuadVboId;
+	GLCall(glGenBuffers(1, &screenQuadVboId));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, screenQuadVboId));
+	GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(screenQuadVertices), &screenQuadVertices, GL_STATIC_DRAW));
+
+	GLCall(glEnableVertexAttribArray(0));
+	GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0));
+
+	GLCall(glEnableVertexAttribArray(1));
+	GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float))));
+
+	unsigned int screenQuadEboId;
+	GLCall(glGenBuffers(1, &screenQuadEboId));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, screenQuadEboId));
+	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(screenQuadIndices), &screenQuadIndices, GL_STATIC_DRAW));
+	
+	GLCall(glBindVertexArray(0));
+
 	GLuint containerVaoId;
 	GLCall(glGenVertexArrays(1, &containerVaoId));
 	GLCall(glBindVertexArray(containerVaoId));
@@ -272,14 +307,14 @@ int main(void) {
 	GLCall(glBindBuffer(GL_ARRAY_BUFFER, containerVboId));
 	GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(containerVertices), containerVertices, GL_STATIC_DRAW));
 
-	GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0));
 	GLCall(glEnableVertexAttribArray(0));
+	GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0));
 
-	GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))));
 	GLCall(glEnableVertexAttribArray(1));
+	GLCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))));
 
-	GLCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))));
 	GLCall(glEnableVertexAttribArray(2));
+	GLCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))));
 
 	GLCall(glBindVertexArray(0));
 
@@ -710,6 +745,10 @@ int main(void) {
 		mainReturnValue = EXIT_FAILURE;
 	}
 
+	GLCall(glDeleteVertexArrays(1, &screenQuadVaoId));
+	GLCall(glDeleteBuffers(1, &screenQuadVboId));
+	GLCall(glDeleteBuffers(1, &screenQuadEboId));
+
 	GLCall(glDeleteVertexArrays(1, &containerVaoId));
 	GLCall(glDeleteBuffers(1, &containerVboId));
 	
@@ -728,6 +767,8 @@ int main(void) {
 	GLCall(glDeleteTextures(1, &blackTextureId));
 
 	GLCall(glDeleteFramebuffers(1, &fboId));
+	GLCall(glDeleteTextures(1, &fboTextureId));
+	GLCall(glDeleteRenderbuffers(1, &fboDepthStencilRboId));
 
 	glfwTerminate();
 	return mainReturnValue;

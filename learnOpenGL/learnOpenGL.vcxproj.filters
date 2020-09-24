@@ -39,6 +39,8 @@
     <None Include="res\shaders\outliningShader.vert" />
     <None Include="res\shaders\outliningShader.frag" />
     <None Include="res\shaders\noneLightSrc.frag" />
+    <None Include="res\shaders\screenQuadShader.vert" />
+    <None Include="res\shaders\screenQuadShader.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\headers\Shader.h">
