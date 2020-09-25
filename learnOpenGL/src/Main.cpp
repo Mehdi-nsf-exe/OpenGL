@@ -33,6 +33,8 @@ static const char* LIGHT_VERTEX_SHADER_PATH = "res/shaders/lightSrc.vert";
 static const char* LIGHT_FRAGMENT_SHADER_PATH = "res/shaders/lightSrc.frag";
 static const char* OUTLINING_VERT_SHADER_PATH = "res/shaders/outliningShader.vert";
 static const char* OUTLINING_FRAG_SHADER_PATH = "res/shaders/outliningShader.frag";
+static const char* SCREEN_VERT_SHADER = "res/shaders/screenQuadShader.vert";
+static const char* SCREEN_FRAG_SHADER = "res/shaders/screenQuadShader.frag";
 
 
 static const char* CONTAINER_IMAGE_PATH = "res/textures/container2.png";
@@ -511,7 +513,15 @@ int main(void) {
 		GLCall(glBindTexture(GL_TEXTURE_2D, blackTextureId));
 		int blackSampler = 4;
 
+		GLCall(glActiveTexture(GL_TEXTURE5));
+		GLCall(glBindTexture(GL_TEXTURE_2D, fboTextureId));
+		int screenFboTexSampler = 5;
+
 		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
+
+		Shader screenShader(SCREEN_VERT_SHADER, SCREEN_FRAG_SHADER);
+		screenShader.use();
+		screenShader.setUniform("ScreenSampler", screenFboTexSampler);
 
 		Shader outliningShader(OUTLINING_VERT_SHADER_PATH, OUTLINING_FRAG_SHADER_PATH);
 		outliningShader.use();
@@ -581,6 +591,9 @@ int main(void) {
 			updateDeltaTime();
 			processInput(window);
 
+			GLCall(glBindFramebuffer(GL_FRAMEBUFFER, fboId));
+
+			GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 			GLCall(glStencilMask(0xFF));
 			GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 			GLCall(glStencilMask(0x00));
@@ -639,7 +652,7 @@ int main(void) {
 				glm::mat4 grassModelMat(1.0f);
 				grassModelMat = glm::translate(grassModelMat, grassPositions[i]);
 				noneLightSrcShader.setUniform("ModelMat", grassModelMat);
-				GLCall(glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0));
+				GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 			}
 
 			GLCall(glEnable(GL_CULL_FACE));
@@ -713,12 +726,26 @@ int main(void) {
 				noneLightSrcShader.setUniform("ModelMat", windowModelMat);
 				noneLightSrcShader.setUniform("NormalMat", windowNormalMat);
 
-				GLCall(glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0));
+				GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 			}
 
 			GLCall(glEnable(GL_CULL_FACE));
 
 			GLCall(glBindVertexArray(0));
+			GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+
+			GLCall(glClearColor(1.0f, 1.0f, 1.0f, 1.0f));
+			GLCall(glClear(GL_COLOR_BUFFER_BIT));
+
+			screenShader.use();
+			GLCall(glBindVertexArray(screenQuadVaoId));
+			GLCall(glDisable(GL_DEPTH_TEST));
+			GLCall(glDisable(GL_CULL_FACE));
+			
+			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+
+			GLCall(glEnable(GL_DEPTH_TEST));
+			GLCall(glEnable(GL_CULL_FACE));
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();
