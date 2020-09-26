@@ -96,7 +96,7 @@ void main() {
 	result += calcSpotLight(FlashLight, fragInfo, viewDir);
 	// point lights
 	for (int i = 0; i < POINT_LIGHTS_NUM; i++) {
-		 result += calcPointLight(PointLights[i], fragInfo, viewDir);
+		result += calcPointLight(PointLights[i], fragInfo, viewDir);
 	}
 
 	FragColor = vec4(result, fragInfo.diffuse.a);

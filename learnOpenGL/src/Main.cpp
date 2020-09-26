@@ -35,6 +35,7 @@ static const char* OUTLINING_VERT_SHADER_PATH = "res/shaders/outliningShader.ver
 static const char* OUTLINING_FRAG_SHADER_PATH = "res/shaders/outliningShader.frag";
 static const char* SCREEN_VERT_SHADER = "res/shaders/screenQuadShader.vert";
 static const char* SCREEN_FRAG_SHADER = "res/shaders/screenQuadShader.frag";
+static const char* SCREEN_KERNEL_FRAG_SHADER = "res/shaders/screenKernelShader.frag";
 
 
 static const char* CONTAINER_IMAGE_PATH = "res/textures/container2.png";
@@ -519,9 +520,16 @@ int main(void) {
 
 		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
 
-		Shader screenShader(SCREEN_VERT_SHADER, SCREEN_FRAG_SHADER);
+		Shader screenShader(SCREEN_VERT_SHADER, SCREEN_KERNEL_FRAG_SHADER);
 		screenShader.use();
 		screenShader.setUniform("ScreenSampler", screenFboTexSampler);
+		screenShader.setUniform("Offset", 1.0f / 300.0f);
+		glm::mat3 kernel(
+			1.0f,  1.0f, 1.0f,
+			1.0f, -8.0f, 1.0f,
+			1.0f,  1.0f, 1.0f
+		);
+		screenShader.setUniform("Kernel", kernel);
 
 		Shader outliningShader(OUTLINING_VERT_SHADER_PATH, OUTLINING_FRAG_SHADER_PATH);
 		outliningShader.use();

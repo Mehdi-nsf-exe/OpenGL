@@ -41,6 +41,7 @@
     <None Include="res\shaders\noneLightSrc.frag" />
     <None Include="res\shaders\screenQuadShader.vert" />
     <None Include="res\shaders\screenQuadShader.frag" />
+    <None Include="res\shaders\screenKernelShader.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\headers\Shader.h">
