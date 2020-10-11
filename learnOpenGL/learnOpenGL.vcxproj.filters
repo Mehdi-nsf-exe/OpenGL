@@ -42,6 +42,9 @@
     <None Include="res\shaders\screenQuadShader.vert" />
     <None Include="res\shaders\screenQuadShader.frag" />
     <None Include="res\shaders\screenKernelShader.frag" />
+    <None Include="res\shaders\skyboxShadervert" />
+    <None Include="res\shaders\skyboxShader.frag" />
+    <None Include="res\shaders\skyboxShader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\headers\Shader.h">
@@ -71,6 +74,24 @@
       <Filter>Archivos de recursos</Filter>
     </Image>
     <Image Include="res\textures\blackTexture.png">
+      <Filter>Archivos de recursos</Filter>
+    </Image>
+    <Image Include="res\textures\skybox\back.jpg">
+      <Filter>Archivos de recursos</Filter>
+    </Image>
+    <Image Include="res\textures\skybox\bottom.jpg">
+      <Filter>Archivos de recursos</Filter>
+    </Image>
+    <Image Include="res\textures\skybox\front.jpg">
+      <Filter>Archivos de recursos</Filter>
+    </Image>
+    <Image Include="res\textures\skybox\left.jpg">
+      <Filter>Archivos de recursos</Filter>
+    </Image>
+    <Image Include="res\textures\skybox\right.jpg">
+      <Filter>Archivos de recursos</Filter>
+    </Image>
+    <Image Include="res\textures\skybox\top.jpg">
       <Filter>Archivos de recursos</Filter>
     </Image>
   </ItemGroup>

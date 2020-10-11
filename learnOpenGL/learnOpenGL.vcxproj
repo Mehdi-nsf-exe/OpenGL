@@ -181,12 +181,21 @@
     <None Include="res\shaders\screenKernelShader.frag" />
     <None Include="res\shaders\screenQuadShader.frag" />
     <None Include="res\shaders\screenQuadShader.vert" />
+    <None Include="res\shaders\skyboxShader.frag" />
+    <None Include="res\shaders\skyboxShader.vert" />
+    <None Include="res\shaders\skyboxShadervert" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\textures\blackTexture.png" />
     <Image Include="res\textures\container2.png" />
     <Image Include="res\textures\container2_specular.png" />
     <Image Include="res\textures\grass.png" />
+    <Image Include="res\textures\skybox\back.jpg" />
+    <Image Include="res\textures\skybox\bottom.jpg" />
+    <Image Include="res\textures\skybox\front.jpg" />
+    <Image Include="res\textures\skybox\left.jpg" />
+    <Image Include="res\textures\skybox\right.jpg" />
+    <Image Include="res\textures\skybox\top.jpg" />
     <Image Include="res\textures\transparentWindow.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

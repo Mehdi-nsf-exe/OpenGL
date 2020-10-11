@@ -36,6 +36,8 @@ static const char* OUTLINING_FRAG_SHADER_PATH = "res/shaders/outliningShader.fra
 static const char* SCREEN_VERT_SHADER = "res/shaders/screenQuadShader.vert";
 static const char* SCREEN_FRAG_SHADER = "res/shaders/screenQuadShader.frag";
 static const char* SCREEN_KERNEL_FRAG_SHADER = "res/shaders/screenKernelShader.frag";
+static const char* SKYBOX_VERT_SHADER_PATH = "res/shaders/skyboxShader.vert";
+static const char* SKYBOX_FRAG_SHADER_PATH = "res/shaders/skyboxShader.frag";
 
 
 static const char* CONTAINER_IMAGE_PATH = "res/textures/container2.png";
@@ -43,6 +45,15 @@ static const char* CONTAINER_SPEC_PATH = "res/textures/container2_specular.png";
 static const char* GRASS_TEXTURE_PATH = "res/textures/grass.png";
 static const char* TRANSPARENT_WINDOW_TEX = "res/textures/transparentWindow.png";
 static const char* BLACK_TEXTURE_PATH = "res/textures/blackTexture.png";
+
+static const std::string skyboxTexPaths[] = {
+	"res/textures/skybox/right.jpg",
+	"res/textures/skybox/left.jpg",
+	"res/textures/skybox/top.jpg",
+	"res/textures/skybox/bottom.jpg",
+	"res/textures/skybox/front.jpg",
+	"res/textures/skybox/back.jpg"
+};
 
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -64,7 +75,16 @@ public:
 
 	@returns The Id of the texture.
  */
-unsigned int loadTexture(const char* path);
+unsigned int loadTexture2D(const char* path);
+
+/**
+	Loads a cube map formed buy the images' paths.
+
+	@param paths An array of 6 images' paths.
+
+	@returns the Id of the generated texture.
+ */
+unsigned int loadCubeMapTex(const std::string paths[]);
 
 /**
 	The callback for the glfw window resizing event.
@@ -234,6 +254,38 @@ int main(void) {
 		2, 3, 0,
 	};
 
+	float skyboxVertices[] = {
+		// Positions
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+	};
+
+	unsigned int skyboxIndices[] = {
+		0, 1, 2,
+		2, 3, 0,
+
+		4, 2, 0,
+		0, 5, 4,
+
+		2, 6, 7,
+		7, 3, 2,
+
+		4, 5, 7,
+		7, 6, 4,
+
+		0, 3, 7,
+		7, 5, 0,
+
+		1, 2, 6,
+		6, 4, 1
+	};
+
 	glm::vec3 grassPositions[]{
 		glm::vec3(-1.5f, -4.0f, -7.48f),
 		glm::vec3( 1.5f, -4.0f, -6.49f),
@@ -271,6 +323,7 @@ int main(void) {
 	glfwSetScrollCallback(window, scrollCallback);
 
 	GLCall(glEnable(GL_DEPTH_TEST));
+	GLCall(glDepthFunc(GL_LEQUAL));
 	GLCall(glEnable(GL_STENCIL_TEST));
 	GLCall(glEnable(GL_BLEND));
 	GLCall(glEnable(GL_CULL_FACE));
@@ -415,6 +468,25 @@ int main(void) {
 
 	GLCall(glBindVertexArray(0));
 
+	unsigned int skyboxVaoId;
+	GLCall(glGenVertexArrays(1, &skyboxVaoId));
+	GLCall(glBindVertexArray(skyboxVaoId));
+
+	unsigned int skyboxVboId;
+	GLCall(glGenBuffers(1, &skyboxVboId));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, skyboxVboId));
+	GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW));
+
+	GLCall(glEnableVertexAttribArray(0));
+	GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0));
+
+	unsigned int skyboxEboId;
+	GLCall(glGenBuffers(1, &skyboxEboId));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxEboId));
+	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndices), &skyboxIndices, GL_STATIC_DRAW));
+
+	GLCall(glBindVertexArray(0));
+
 	unsigned int fboId;
 	GLCall(glGenFramebuffers(1, &fboId));
 	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, fboId));
@@ -484,33 +556,34 @@ int main(void) {
 	unsigned int grassTextureId;
 	unsigned int windowTexId;
 	unsigned int blackTextureId;
+	unsigned int skyboxTexId;
 	
 	int mainReturnValue = EXIT_SUCCESS;
 
 	try {
 
 		GLCall(glActiveTexture(GL_TEXTURE0));
-		diffuseMapId = loadTexture(CONTAINER_IMAGE_PATH);
+		diffuseMapId = loadTexture2D(CONTAINER_IMAGE_PATH);
 		GLCall(glBindTexture(GL_TEXTURE_2D, diffuseMapId));
 		int containerDiffSampler = 0;
 
 		GLCall(glActiveTexture(GL_TEXTURE1));
-		specularMapId = loadTexture(CONTAINER_SPEC_PATH);
+		specularMapId = loadTexture2D(CONTAINER_SPEC_PATH);
 		GLCall(glBindTexture(GL_TEXTURE_2D, specularMapId));
 		int containerSpecSampler = 1;
 
 		GLCall(glActiveTexture(GL_TEXTURE2));
-		grassTextureId = loadTexture(GRASS_TEXTURE_PATH);
+		grassTextureId = loadTexture2D(GRASS_TEXTURE_PATH);
 		GLCall(glBindTexture(GL_TEXTURE_2D, grassTextureId));
 		int grassSampler = 2;
 
 		GLCall(glActiveTexture(GL_TEXTURE3));
-		windowTexId = loadTexture(TRANSPARENT_WINDOW_TEX);
+		windowTexId = loadTexture2D(TRANSPARENT_WINDOW_TEX);
 		GLCall(glBindTexture(GL_TEXTURE_2D, windowTexId));
 		int windowSampler = 3;
 
 		GLCall(glActiveTexture(GL_TEXTURE4));
-		blackTextureId = loadTexture(BLACK_TEXTURE_PATH);
+		blackTextureId = loadTexture2D(BLACK_TEXTURE_PATH);
 		GLCall(glBindTexture(GL_TEXTURE_2D, blackTextureId));
 		int blackSampler = 4;
 
@@ -518,22 +591,33 @@ int main(void) {
 		GLCall(glBindTexture(GL_TEXTURE_2D, fboTextureId));
 		int screenFboTexSampler = 5;
 
+		stbi_set_flip_vertically_on_load(false);
+		GLCall(glActiveTexture(GL_TEXTURE6));
+		skyboxTexId = loadCubeMapTex(skyboxTexPaths);
+		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexId));
+		int skyboxTexSampler = 6;
+		stbi_set_flip_vertically_on_load(true);
+
 		Shader lightSrcShader(LIGHT_VERTEX_SHADER_PATH, LIGHT_FRAGMENT_SHADER_PATH);
+
+		Shader skyboxShader(SKYBOX_VERT_SHADER_PATH, SKYBOX_FRAG_SHADER_PATH);
+		skyboxShader.use();
+		skyboxShader.setUniform("SkyboxSampler", skyboxTexSampler);
 
 		Shader screenShader(SCREEN_VERT_SHADER, SCREEN_KERNEL_FRAG_SHADER);
 		screenShader.use();
 		screenShader.setUniform("ScreenSampler", screenFboTexSampler);
 		screenShader.setUniform("Offset", 1.0f / 300.0f);
 		glm::mat3 kernel(
-			1.0f,  1.0f, 1.0f,
-			1.0f, -8.0f, 1.0f,
-			1.0f,  1.0f, 1.0f
+			0.0f,  0.0f, 0.0f,
+			0.0f,  1.0f, 0.0f,
+			0.0f,  0.0f, 0.0f
 		);
 		screenShader.setUniform("Kernel", kernel);
 
 		Shader outliningShader(OUTLINING_VERT_SHADER_PATH, OUTLINING_FRAG_SHADER_PATH);
 		outliningShader.use();
-		outliningShader.setUniform("OutliningColor", 1.0f, 1.0f, 0.0f, 0.3f);
+		outliningShader.setUniform("OutliningColor", 1.0f, 1.0f, 0.0f, 0.2f);
 
 		Shader noneLightSrcShader(OBJECT_VERTEX_SHADER_PATH, OBJECT_FRAGMENT_SHADER_PATH);
 		noneLightSrcShader.use();
@@ -543,9 +627,9 @@ int main(void) {
 		noneLightSrcShader.setUniform("material.shininess", 64.0f);
 		// Directional light constant uniforms
 		noneLightSrcShader.setUniform("DirLight.direction", 0.0f, -1.0f, 0.0f);
-		noneLightSrcShader.setUniform("DirLight.ambient", 0.02f, 0.03f, 0.03f);
-		noneLightSrcShader.setUniform("DirLight.diffuse", 0.2f, 0.3f, 0.3f);
-		noneLightSrcShader.setUniform("DirLight.specular", 0.2f, 0.3f, 0.3f);
+		noneLightSrcShader.setUniform("DirLight.ambient", 0.015f, 0.034f, 0.048f);
+		noneLightSrcShader.setUniform("DirLight.diffuse", 0.15f, 0.34f, 0.48f);
+		noneLightSrcShader.setUniform("DirLight.specular", 0.15f, 0.34f, 0.48f);
 		// Flash light constant uniforms
 		noneLightSrcShader.setUniform("FlashLight.pointLightProp.diffuse", 0.8f, 1.0f, 0.2f);
 		noneLightSrcShader.setUniform("FlashLight.pointLightProp.ambient", 0.08f, 0.1f, 0.02f);
@@ -647,6 +731,18 @@ int main(void) {
 			noneLightSrcShader.setUniform("material.specular", containerSpecSampler);
 
 			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+
+			GLCall(glDisable(GL_CULL_FACE));
+
+			GLCall(glBindVertexArray(skyboxVaoId));
+
+			skyboxShader.use();
+			skyboxShader.setUniform("ViewMat", glm::mat4(glm::mat3(viewMat)));
+			skyboxShader.setUniform("ProjectionMat", projectionMat);
+
+			GLCall(glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0));
+
+			GLCall(glEnable(GL_CULL_FACE));
 
 			GLCall(glBindVertexArray(grassVaoId));
 			GLCall(glDisable(GL_CULL_FACE));
@@ -809,7 +905,7 @@ int main(void) {
 	return mainReturnValue;
 }
 
-unsigned int loadTexture(const char* path) {
+unsigned int loadTexture2D(const char* path) {
 
 	int width, height, nrComponents;
 	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
@@ -849,6 +945,56 @@ unsigned int loadTexture(const char* path) {
 
 	stbi_image_free(data);
 	data = nullptr;
+
+	return textureId;
+}
+
+#define CUBE_MAP_FACES_NUM 6
+
+unsigned int loadCubeMapTex(const std::string paths[]) {
+
+	unsigned int textureId;
+	GLCall(glGenTextures(1, &textureId));
+	GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, textureId));
+
+	int width, height, chanelsNum;
+	unsigned char* data;
+
+	for (int i = 0; i < CUBE_MAP_FACES_NUM; i++) {
+		data = stbi_load(paths[i].c_str(), &width, &height, &chanelsNum, 0);
+
+		GLenum format;
+		switch (chanelsNum) {
+			case 1: {
+				format = GL_RED;
+				break;
+			}
+			case 3: {
+				format = GL_RGB;
+				break;
+			}
+			case 4: {
+				format = GL_RGBA;
+				break;
+			}
+			default: {
+				ASSERT(false);
+			}
+		}
+		if (data) {
+			GLCall(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data));
+			stbi_image_free(data);
+		}
+		else {
+			throw TextureLoadingFailure();
+		}
+	}
+
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
 
 	return textureId;
 }
