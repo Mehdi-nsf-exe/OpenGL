@@ -17,7 +17,7 @@
 
 #include "OpenGLErrorHandling.h"
 
-#define MAJOR_OPENGL_VERSION 3
+#define MAJOR_OPENGL_VERSION 4
 #define MINOR_OPENGL_VERSION 3
 
 #define WINDOW_WIDTH		800
@@ -47,12 +47,12 @@ static const char* TRANSPARENT_WINDOW_TEX = "res/textures/transparentWindow.png"
 static const char* BLACK_TEXTURE_PATH = "res/textures/blackTexture.png";
 
 static const std::string skyboxTexPaths[] = {
-	"res/textures/skybox/right.jpg",
-	"res/textures/skybox/left.jpg",
-	"res/textures/skybox/top.jpg",
-	"res/textures/skybox/bottom.jpg",
-	"res/textures/skybox/front.jpg",
-	"res/textures/skybox/back.jpg"
+	"res/textures/skybox/right.png",
+	"res/textures/skybox/left.png",
+	"res/textures/skybox/top.png",
+	"res/textures/skybox/bottom.png",
+	"res/textures/skybox/front.png",
+	"res/textures/skybox/back.png"
 };
 
 static Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -313,6 +313,8 @@ int main(void) {
 		return EXIT_FAILURE;
 	}
 
+	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+
 	stbi_set_flip_vertically_on_load(true);
 
 	GLCall(glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
@@ -519,6 +521,15 @@ int main(void) {
 	}
 	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
+	unsigned int uboPVMats;
+	GLCall(glGenBuffers(1, &uboPVMats));
+
+	GLCall(glBindBuffer(GL_UNIFORM_BUFFER, uboPVMats));
+	GLCall(glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW));
+	GLCall(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+
+	GLCall(glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboPVMats, 0, 2 * sizeof(glm::mat4)));
+
 	glm::vec3 pointLightsPositions[] = {
 		glm::vec3(-4.0f,  2.0f, -12.0f),
 		glm::vec3( 2.3f, -3.3f, -4.0f),
@@ -540,7 +551,12 @@ int main(void) {
 	};
 
 	glm::mat4 viewMat;
-	glm::mat4 projectionMat;
+
+	glm::mat4 projectionMat = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+
+	GLCall(glBindBuffer(GL_UNIFORM_BUFFER, uboPVMats));
+	GLCall(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionMat)));
+	GLCall(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 
 	glm::mat4 groundPlaneModelMat(1.0f);
 	groundPlaneModelMat = glm::translate(groundPlaneModelMat, glm::vec3(0.0f, -4.0f, -7.0f));
@@ -591,7 +607,7 @@ int main(void) {
 		GLCall(glBindTexture(GL_TEXTURE_2D, fboTextureId));
 		int screenFboTexSampler = 5;
 
-		stbi_set_flip_vertically_on_load(false);
+		//stbi_set_flip_vertically_on_load(false);
 		GLCall(glActiveTexture(GL_TEXTURE6));
 		skyboxTexId = loadCubeMapTex(skyboxTexPaths);
 		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexId));
@@ -613,6 +629,7 @@ int main(void) {
 			0.0f,  1.0f, 0.0f,
 			0.0f,  0.0f, 0.0f
 		);
+
 		screenShader.setUniform("Kernel", kernel);
 
 		Shader outliningShader(OUTLINING_VERT_SHADER_PATH, OUTLINING_FRAG_SHADER_PATH);
@@ -694,11 +711,11 @@ int main(void) {
 
 			viewMat = camera.getViewMatrix();
 
-			projectionMat = glm::perspective(glm::radians(camera.getZoom()), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+			GLCall(glBindBuffer(GL_UNIFORM_BUFFER, uboPVMats));
+			GLCall(glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(viewMat)));
+			GLCall(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 
 			lightSrcShader.use();
-			lightSrcShader.setUniform("ViewMat", viewMat);
-			lightSrcShader.setUniform("ProjectionMat", projectionMat);
 
 			GLCall(glBindVertexArray(lightSrcVaoId));
 
@@ -714,8 +731,6 @@ int main(void) {
 			}
 
 			noneLightSrcShader.use();
-			noneLightSrcShader.setUniform("ViewMat", viewMat);
-			noneLightSrcShader.setUniform("ProjectionMat", projectionMat);
 			noneLightSrcShader.setUniform("ViewPos", camera.getPosition());
 
 			noneLightSrcShader.setUniform("FlashLight.pointLightProp.position", camera.getPosition());
@@ -737,8 +752,6 @@ int main(void) {
 			GLCall(glBindVertexArray(skyboxVaoId));
 
 			skyboxShader.use();
-			skyboxShader.setUniform("ViewMat", glm::mat4(glm::mat3(viewMat)));
-			skyboxShader.setUniform("ProjectionMat", projectionMat);
 
 			GLCall(glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_INT, 0));
 
@@ -790,8 +803,6 @@ int main(void) {
 			GLCall(glStencilMask(0x00));
 
 			outliningShader.use();
-			outliningShader.setUniform("ViewMat", viewMat);
-			outliningShader.setUniform("ProjectionMat", projectionMat);
 
 			for (int i = 0; i < 10; i++) {
 				objectModelMat = glm::mat4(1.0f);

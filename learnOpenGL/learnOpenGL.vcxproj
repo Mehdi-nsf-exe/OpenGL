@@ -191,11 +191,17 @@
     <Image Include="res\textures\container2_specular.png" />
     <Image Include="res\textures\grass.png" />
     <Image Include="res\textures\skybox\back.jpg" />
+    <Image Include="res\textures\skybox\back.png" />
     <Image Include="res\textures\skybox\bottom.jpg" />
+    <Image Include="res\textures\skybox\bottom.png" />
     <Image Include="res\textures\skybox\front.jpg" />
+    <Image Include="res\textures\skybox\front.png" />
     <Image Include="res\textures\skybox\left.jpg" />
+    <Image Include="res\textures\skybox\left.png" />
     <Image Include="res\textures\skybox\right.jpg" />
+    <Image Include="res\textures\skybox\right.png" />
     <Image Include="res\textures\skybox\top.jpg" />
+    <Image Include="res\textures\skybox\top.png" />
     <Image Include="res\textures\transparentWindow.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

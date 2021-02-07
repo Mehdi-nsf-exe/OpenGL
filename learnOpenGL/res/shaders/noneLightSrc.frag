@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 
 #define POINT_LIGHTS_NUM 4
 
@@ -60,9 +60,11 @@ vec3 calcPointLight(PointLight light, FragmentInfo fragInfo, vec3 viewDir);
  */
 vec3 calcSpotLight(SpotLight light, FragmentInfo fragInfo, vec3 viewDir);
 
-in vec3 FragPos;
-in vec3 Normal;
-in vec2 TexCoords;
+in VS_OUT {
+	vec3 FragPos;
+	vec3 Normal;
+	vec2 TexCoords;
+} fs_in;
 
 uniform DirectionalLight DirLight;
 uniform SpotLight FlashLight;
@@ -76,15 +78,15 @@ void main() {
 	
 	// porperties
 	FragmentInfo fragInfo;
-	fragInfo.diffuse = texture(material.diffuse, TexCoords);
+	fragInfo.diffuse = texture(material.diffuse, fs_in.TexCoords);
 	if (fragInfo.diffuse.a < 0.01) {
 		discard;
 	}
-	fragInfo.specular = vec3(texture(material.specular, TexCoords));
-	fragInfo.position = FragPos;
-	fragInfo.normal = normalize(Normal);
+	fragInfo.specular = vec3(texture(material.specular, fs_in.TexCoords));
+	fragInfo.position = fs_in.FragPos;
+	fragInfo.normal = normalize(fs_in.Normal);
 
-	vec3 viewDir = normalize(ViewPos - FragPos);
+	vec3 viewDir = normalize(ViewPos - fs_in.FragPos);
 
 	if (dot(viewDir, fragInfo.normal) <= 0) {
 		fragInfo.normal = -fragInfo.normal;
